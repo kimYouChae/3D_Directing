@@ -31,10 +31,6 @@ public class MikuCharacter : MonoBehaviour
     {
         if (!isPlaying)
             return;
-
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
-            StartCoroutine(Attack());
-
     }
 
     private IEnumerator Attack() 
