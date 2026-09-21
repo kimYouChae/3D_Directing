@@ -1,18 +1,33 @@
 using System.Collections;
-using UnityEngine;
 using Unity.Cinemachine;
+using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Playables;
+
+public enum PlayerState 
+{ 
+    Locomotion, 
+    Attacking, 
+    Cutscene 
+}
 
 public class MikuCharacter : MonoBehaviour
 {
+    public PlayerState playerState;
+
+    [Header("===Component===")]
     [SerializeField]
     private Animator playerAnimator;
     [SerializeField]
     private Animator enemyAnimator;
-
     [SerializeField]
     private bool isPlaying;
 
+    [Header("===Timeline===")]
+    [SerializeField]
+    private PlayableDirector introDirector;
+
+    [Header("===Cinemachine===")]
     [SerializeField] CinemachineCamera defaultCam;
     [SerializeField] CinemachineCamera ultimateCam;
 
@@ -25,12 +40,22 @@ public class MikuCharacter : MonoBehaviour
         isPlaying = true;
 
         defaultCam.Priority = 10;
+
+        playerState = PlayerState.Locomotion;
+        PlayOpening();
     }
 
-    void Update()
+    private void PlayOpening() 
     {
-        if (!isPlaying)
-            return;
+        playerState = PlayerState.Cutscene;
+
+        introDirector.stopped += IntroStopped;
+        introDirector.Play();
+    }
+
+    private void IntroStopped(PlayableDirector pd) 
+    {
+        playerState = PlayerState.Locomotion;
     }
 
     private IEnumerator Attack() 

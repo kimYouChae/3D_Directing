@@ -4,6 +4,8 @@ using UnityEngine.InputSystem;
 
 public class MikuMovement : MonoBehaviour
 {
+    [SerializeField] MikuCharacter character;
+
     [Header("Component")]
     [SerializeField] public GameObject cinemachindCameraTarget;
     // [SerializeField] private PlayerInput playerInput;
@@ -96,6 +98,9 @@ public class MikuMovement : MonoBehaviour
 
     private void Update()
     {
+        if (character.playerState != PlayerState.Locomotion)
+            return;
+
         ReadInput();
         JumpAndGravity();
         GroundedCheck();
