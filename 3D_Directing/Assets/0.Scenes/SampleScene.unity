@@ -189,8 +189,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 19650840}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.08367893, y: -0.08522062, z: 0.007182772, w: 0.9928161}
-  m_LocalPosition: {x: 0.33624128, y: 0.688311, z: -1.7591953}
+  m_LocalRotation: {x: 0.083357394, y: -0.12175158, z: 0.010261764, w: 0.9890009}
+  m_LocalPosition: {x: 0.5, y: 0.69200003, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -214,10 +214,10 @@ MonoBehaviour:
   CameraSide: 1
   CameraDistance: 2
   AvoidObstacles:
-    Enabled: 0
+    Enabled: 1
     CollisionFilter:
       serializedVersion: 2
-      m_Bits: 1
+      m_Bits: 64
     IgnoreTag: 
     CameraRadius: 0.2
     DampingIntoCollision: 0
@@ -503,7 +503,7 @@ Camera:
     height: 1
   near clip plane: 0.01
   far clip plane: 1000
-  field of view: 60.000004
+  field of view: 60
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -529,8 +529,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.9923212, z: -0.12368808, w: 0}
-  m_LocalPosition: {x: 0, y: 0.757, z: 0.949}
+  m_LocalRotation: {x: 0, y: -0.4793046, z: 0, w: 0.8776486}
+  m_LocalPosition: {x: 0.37, y: 0.1, z: -0.09}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1085,7 +1085,7 @@ PlayableDirector:
   m_Enabled: 1
   serializedVersion: 3
   m_PlayableAsset: {fileID: 11400000, guid: 82db056634bfd5f4797b3aaea7788e16, type: 2}
-  m_InitialState: 1
+  m_InitialState: 0
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
   m_InitialTime: 0
@@ -1099,6 +1099,7 @@ PlayableDirector:
     - a152dd0e8b975ca4a9edd6321e7198f7: {fileID: 375814060}
     - c07e9d135b3f93547b390cddebcb61e3: {fileID: 1326600902}
     - 4a6e3eb41c122c34dbb3c22a59985144: {fileID: 293515674}
+    - 7c82c4c5ce2fa494f90c5967640bcdb1: {fileID: 19650843}
 --- !u!1 &1639857209
 GameObject:
   m_ObjectHideFlags: 0
@@ -2891,7 +2892,7 @@ Animator:
   m_GameObject: {fileID: 4776938192457491006}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 39e50c14297c0a14f820867a727d4504, type: 3}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: fbb582a75ebc52e4d82571ecd8009df4, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 1
@@ -4975,11 +4976,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9d53c0641cd02340aa30f250732a9b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerState: 0
+  movement: {fileID: 5260423539397015687}
   playerAnimator: {fileID: 0}
   enemyAnimator: {fileID: 6248599493450095584}
   isPlaying: 0
+  introDirector: {fileID: 1405915883}
   defaultCam: {fileID: 19650843}
-  ultimateCam: {fileID: 0}
+  AttackAction_First: {fileID: 0}
+  AttackAction_Second: {fileID: 0}
+  AttackAction_Third: {fileID: 0}
 --- !u!143 &5260423539397015686
 CharacterController:
   m_ObjectHideFlags: 0
@@ -5017,10 +5023,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fd36297babfc294f8189d0b1aeaf426, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  character: {fileID: 5260423539397015685}
   cinemachindCameraTarget: {fileID: 566016058}
   controller: {fileID: 0}
   mainCamera: {fileID: 0}
   animator: {fileID: 0}
+  attackInput: 1
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
