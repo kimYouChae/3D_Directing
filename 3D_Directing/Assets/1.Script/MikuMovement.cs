@@ -1,4 +1,5 @@
 
+using Unity.Multiplayer.Center.Common;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -12,6 +13,13 @@ public class MikuMovement : MonoBehaviour
     [SerializeField] private CharacterController controller;
     [SerializeField] private GameObject mainCamera;
     [SerializeField] private Animator animator;
+
+    #region Attack
+    [Header("===Attack===")]
+    [SerializeField] private bool attackInput = true;
+
+    public void SetAttackInput(bool flag) { attackInput = flag; }
+    #endregion
 
     #region Input
     private Vector2 moveInput;
@@ -98,10 +106,13 @@ public class MikuMovement : MonoBehaviour
 
     private void Update()
     {
-        if (character.playerState != PlayerState.Locomotion)
+        ReadInput();
+
+        if (character.playerState == PlayerState.Cutscene
+            || character.playerState == PlayerState.Attacking )
             return;
 
-        ReadInput();
+        // state가 Move일때만 실행 
         JumpAndGravity();
         GroundedCheck();
         Move();
@@ -134,6 +145,18 @@ public class MikuMovement : MonoBehaviour
 
         // 달리기 ( 키가 눌려있는 모든 프레임 동안 )
         sprintInput = kb.leftShiftKey.isPressed;
+
+        // 스킬 입력
+        if (mouse.leftButton.wasPressedThisFrame)
+        {
+            Debug.Log($"클릭 감지됨 / attackInput={attackInput} / state={character.playerState}");
+
+            if (attackInput == true)
+            {
+                character.Attack();
+                attackInput = false;
+            }
+        } 
     }
 
     private void JumpAndGravity()

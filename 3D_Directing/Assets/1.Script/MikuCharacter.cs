@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Threading.Tasks;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -15,6 +17,8 @@ public class MikuCharacter : MonoBehaviour
 {
     public PlayerState playerState;
 
+    public MikuMovement movement;
+
     [Header("===Component===")]
     [SerializeField]
     private Animator playerAnimator;
@@ -29,10 +33,11 @@ public class MikuCharacter : MonoBehaviour
 
     [Header("===Cinemachine===")]
     [SerializeField] CinemachineCamera defaultCam;
-    [SerializeField] CinemachineCamera ultimateCam;
+    [SerializeField] CinemachineCamera AttackAction_First;
+    [SerializeField] CinemachineCamera AttackAction_Second;
+    [SerializeField] CinemachineCamera AttackAction_Third;
 
     const string AttackParameter = "Attack";
-    const string HitParameter = "Hit";
 
     void Start()
     {
@@ -42,14 +47,16 @@ public class MikuCharacter : MonoBehaviour
         defaultCam.Priority = 10;
 
         playerState = PlayerState.Locomotion;
-        PlayOpening();
+        // PlayOpening();
     }
 
     private void PlayOpening() 
     {
         playerState = PlayerState.Cutscene;
 
+        // intro가 끝나면 액션 등록 
         introDirector.stopped += IntroStopped;
+        // intro 실행 
         introDirector.Play();
     }
 
@@ -58,21 +65,35 @@ public class MikuCharacter : MonoBehaviour
         playerState = PlayerState.Locomotion;
     }
 
-    private IEnumerator Attack() 
+    public void Attack() 
     {
-        isPlaying = false;
+        playerState = PlayerState.Attacking;
 
-        // 연출 캠 우선순위 올리기 
-        ultimateCam.Priority = 20;
-        yield return new WaitForSeconds(0.2f);
+        playerAnimator.SetTrigger(AttackParameter);
+    }
 
-        playerAnimator.SetTrigger(AttackParameter);     
-        enemyAnimator.SetTrigger(HitParameter);
-        yield return new WaitForSeconds(1f);
+    public void OpenComboWindow() 
+    {
+        // 클릭 입력을 받을 수 있게  
+        movement.SetAttackInput(true);
+    }
 
-        // 연출 캠 우선순위 원래대로 
-        ultimateCam.Priority = 0;
+    public void HitBoxOn() 
+    {
+        Debug.Log("히트박스 On");
+    }
 
-        isPlaying = true;
+    public void HitBoxOff()
+    {
+        Debug.Log("히트박스 OFf");
+    }
+
+    public void OnAttackEnd() 
+    {
+        Debug.Log("공격이 끝");
+
+        playerState = PlayerState.Locomotion;
+        movement.SetAttackInput(true); 
+
     }
 }
