@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Playables;
 using UnityEngine.TextCore.Text;
+using static Unity.Cinemachine.IInputAxisOwner.AxisDescriptor;
 
 public enum PlayerState 
 { 
@@ -24,6 +25,8 @@ public class MikuCharacter : MonoBehaviour
     private MikuMovement movement;
     [SerializeField]
     private Animator animator;
+    [SerializeField]
+    private GameObject mainCamera;
 
     [Header("===Timeline===")]
     [SerializeField]
@@ -31,6 +34,10 @@ public class MikuCharacter : MonoBehaviour
 
     [Header("===Cinemachine===")]
     [SerializeField] CinemachineCamera defaultCam;
+
+    [Header("===Targeting===")]
+    [SerializeField] private float searchRadius = 3f;
+    [SerializeField] private LayerMask enemyLayer;
 
     const string AttackParameter = "Attack";
 
@@ -83,6 +90,15 @@ public class MikuCharacter : MonoBehaviour
 
     private void Attack() 
     {
+        Transform target = FindTarget();
+        Debug.Log(target != null ? $"타겟: {target.name}" : "타겟 없음");
+        if (target != null) 
+        {
+            Vector3 dir = target.position - transform.position;
+            dir.y = 0;
+            transform.rotation = Quaternion.LookRotation(dir);
+        }
+
         playerState = PlayerState.Attacking;
 
         animator.SetTrigger(AttackParameter);
@@ -159,4 +175,45 @@ public class MikuCharacter : MonoBehaviour
 
     }
 
+    private Transform FindTarget() 
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, searchRadius, enemyLayer);
+        if (hits.Length == 0) return null;
+
+        Transform closer = null;
+        float closerDistace = float.MaxValue;
+
+        // 카메라 앞쪽 
+        Vector3 camForward = mainCamera.transform.forward;
+        camForward.y = 0;
+
+        foreach (Collider collider in hits) 
+        {
+            // 거리 구하기 
+            Vector3 dir = collider.transform.position - transform.position;
+            // 높이는 계산 X 
+            dir.y = 0;
+
+            float angle = Vector3.Angle(camForward, dir);
+
+            // 뒤의 적은 제외
+            if (angle > 120f) continue;
+
+            // 가장 가까운 거리 비교
+            float dist = dir.magnitude;
+            if (dist < closerDistace)
+            {
+                closerDistace = dist;
+                closer = collider.transform;
+            }
+        } 
+
+        return closer;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, searchRadius);
+    }
 }
