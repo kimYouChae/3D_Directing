@@ -5,28 +5,10 @@ using UnityEngine.InputSystem;
 
 public class MikuMovement : MonoBehaviour
 {
-    [SerializeField] MikuCharacter character;
-
     [Header("Component")]
     [SerializeField] public GameObject cinemachindCameraTarget;
-    // [SerializeField] private PlayerInput playerInput;
     [SerializeField] private CharacterController controller;
     [SerializeField] private GameObject mainCamera;
-    [SerializeField] private Animator animator;
-
-    #region Attack
-    [Header("===Attack===")]
-    [SerializeField] private bool attackInput = true;
-
-    public void SetAttackInput(bool flag) { attackInput = flag; }
-    #endregion
-
-    #region Input
-    private Vector2 moveInput;
-    private Vector2 lookInput;
-    private bool jumpInput;
-    private bool sprintInput;
-    #endregion
 
     #region Camera Rotationa
     private float lookSensitivity = 0.05f;
@@ -41,12 +23,6 @@ public class MikuMovement : MonoBehaviour
     private float bottomClamp = -30f;
 
     #endregion 
-
-    #region Animation
-    private bool hasAnimator;
-
-    private float animationBlend;
-    #endregion
 
     #region Move
     private float speed;
@@ -95,81 +71,32 @@ public class MikuMovement : MonoBehaviour
         Cursor.visible = false;
 
         controller = GetComponent<CharacterController>();
-        
-        // playerInput = GetComponent<PlayerInput>();
-        hasAnimator = TryGetComponent(out animator);
 
         // 점프 타임아웃 세팅 
         jumpTimeoutDelta = jumpTimeOut;
         fallTimeoutDelta = falltimeOut;
     }
 
-    private void Update()
+    public void Tick(bool jumpInput, bool sprintInput , Vector2 moveInput) 
     {
-        ReadInput();
-
-        if (character.playerState == PlayerState.Cutscene
-            || character.playerState == PlayerState.Attacking )
-            return;
-
-        // state가 Move일때만 실행 
-        JumpAndGravity();
+        JumpAndGravity(jumpInput);
         GroundedCheck();
-        Move();
+        Move(sprintInput , moveInput);
     }
 
-    private void LateUpdate()
+    public void CameraTick(Vector2 lookInput) 
     {
-        CameraRotation();
+        CameraRotation(lookInput);
     }
 
-    private void ReadInput() 
-    {
-        var kb = Keyboard.current;
-        var mouse = Mouse.current;
-        if (kb == null || mouse == null) return;
-
-        // WASD 입력
-        float x = 0, y = 0;
-        if (kb.aKey.isPressed) x -= 1f;
-        if (kb.dKey.isPressed) x += 1f;
-        if (kb.sKey.isPressed) y -= 1f;
-        if (kb.wKey.isPressed) y += 1f;
-        moveInput = new Vector2(x,y).normalized;
-
-        // 마우스 
-        lookInput = mouse.delta.ReadValue();
-
-        // 점프 ( 키가 눌린 첫 프레임만 )
-        if (kb.spaceKey.wasPressedThisFrame) jumpInput = true;
-
-        // 달리기 ( 키가 눌려있는 모든 프레임 동안 )
-        sprintInput = kb.leftShiftKey.isPressed;
-
-        // 스킬 입력
-        if (mouse.leftButton.wasPressedThisFrame)
-        {
-            Debug.Log($"클릭 감지됨 / attackInput={attackInput} / state={character.playerState}");
-
-            if (attackInput == true)
-            {
-                character.Attack();
-                attackInput = false;
-            }
-        } 
-    }
-
-    private void JumpAndGravity()
+    private void JumpAndGravity(bool jumpInput)
     {
         if (grounded)
         {
             // reset the fall timeout timer
             fallTimeoutDelta = falltimeOut;
 
-            if (hasAnimator)
-            {
-               // 애니메이터 업데이트
-            }
+            // ##TODO: 애니메이터 업데이트
 
             // stop our velocity dropping infinitely when grounded
             if (verticalVelocity < 0.0f)
@@ -184,10 +111,7 @@ public class MikuMovement : MonoBehaviour
                 // 대충 jumpHeight만큼 뛰게 됨 . 
                 verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
 
-                if (hasAnimator)
-                {
-                    // 점프 애니메이션
-                }
+                // ##TODO:점프 애니메이션
             }
 
             // jump timeout
@@ -208,11 +132,7 @@ public class MikuMovement : MonoBehaviour
             }
             else
             {
-                // update animator if using character
-                if (hasAnimator)
-                {
-                    // 떨어지는 애니메이션
-                }
+                // ##TODO: 떨어지는 애니메이션
             }
 
             // 끝나면 false로
@@ -232,14 +152,11 @@ public class MikuMovement : MonoBehaviour
             transform.position.z);
         grounded = Physics.CheckSphere(spherePosition, groundedRadious, groundLayer,
             QueryTriggerInteraction.Ignore);
-        
-        if (hasAnimator)
-        {
-            // 땅에 착지하는 애니메이션
-        }
+
+        // ##TODO: 땅에 착지하는 애니메이션
     }
 
-    private void Move() 
+    private void Move(bool sprintInput, Vector2 moveInput ) 
     {
         // 1. 목표 속도 정하기
         float targetSpeed = sprintInput ? sprintSpeed : moveSpeed;
@@ -271,8 +188,8 @@ public class MikuMovement : MonoBehaviour
         }
 
         //애니메이션 blend
-        animationBlend = Mathf.Lerp(animationBlend, targetSpeed, Time.deltaTime * speedChangerate);
-        if(animationBlend < 0.01f) animationBlend = 0.0f;
+        // animationBlend = Mathf.Lerp(animationBlend, targetSpeed, Time.deltaTime * speedChangerate);
+        // if(animationBlend < 0.01f) animationBlend = 0.0f;
 
         // 3. 캐릭터 회전 
         Vector3 inputDirection = new Vector3(moveInput.x, 0, moveInput.y);
@@ -299,7 +216,7 @@ public class MikuMovement : MonoBehaviour
         // 애니메이션 실행 
     }
 
-    private void CameraRotation() 
+    private void CameraRotation(Vector2 lookInput) 
     {
         // 마우스 미세 떨림 검사
         // && 연출 중 조작 막을 플래그
