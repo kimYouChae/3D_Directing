@@ -6,8 +6,6 @@ using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Playables;
-using UnityEngine.TextCore.Text;
-using static Unity.Cinemachine.IInputAxisOwner.AxisDescriptor;
 
 public enum PlayerState 
 { 
@@ -15,6 +13,7 @@ public enum PlayerState
     Attacking, 
     Cutscene 
 }
+public enum AttackStep { First, Second, Third }
 
 public class MikuCharacter : MonoBehaviour
 {
@@ -36,10 +35,17 @@ public class MikuCharacter : MonoBehaviour
     [SerializeField] CinemachineCamera defaultCam;
 
     [Header("===Targeting===")]
-    [SerializeField] private float searchRadius = 3f;
+    [SerializeField] private float searchRadius = 1.7f;
     [SerializeField] private LayerMask enemyLayer;
+    [SerializeField] private Transform targetTransform;
+    private float attackRange = 0.7f;       // 흡착 목표 거리 
+    private float dashThreshold = 1f;     // 이보다 멀면 대시
+    private float snapSpeed;
+    private float dashClipLength = 0.6f;
 
     const string AttackParameter = "Attack";
+    const string HasTargetParameter = "HasTarget";
+    const string DashSpeedParameter = "DashSpeed";
 
     #region Input
     private Vector2 moveInput;
@@ -50,10 +56,14 @@ public class MikuCharacter : MonoBehaviour
 
     #region Attack
     [Header("===Attack===")]
+    [SerializeField] private WeaponBlade weapon;
+
     [SerializeField] private bool isWindowOpen = false;
     [SerializeField] private bool comboQueue = false;
     [SerializeField] private bool isPlayingAttack = false;
 
+    [SerializeField] private Transform blade;   // 칼 오브젝트 (대파)
+    [SerializeField] private float bladeLength;
     public bool ComboQueue { get => comboQueue; set => comboQueue = value; }
     public bool IsWindowOpen { get => isWindowOpen; set => isWindowOpen = value; }
     public bool IsPlayingAttack { get => isPlayingAttack; set => isPlayingAttack = value; }
@@ -90,13 +100,23 @@ public class MikuCharacter : MonoBehaviour
 
     private void Attack() 
     {
-        Transform target = FindTarget();
-        Debug.Log(target != null ? $"타겟: {target.name}" : "타겟 없음");
-        if (target != null) 
+        animator.SetBool(HasTargetParameter , false);
+
+        targetTransform = FindTarget();
+        Debug.Log(targetTransform != null ? $"타겟: {targetTransform.name}" : "타겟 없음");
+        if (targetTransform != null) 
         {
-            Vector3 dir = target.position - transform.position;
+            Vector3 dir = targetTransform.position - transform.position;
             dir.y = 0;
             transform.rotation = Quaternion.LookRotation(dir);
+
+            float dist = dir.magnitude; // 적과 나 사이의 거리
+            bool needDash = dist > dashThreshold;   // dashThresh 보다 길면 true
+            animator.SetBool(HasTargetParameter, needDash); // dash 애니메이션 
+
+            // 대시가 필요하면
+            if (needDash)
+                snapSpeed = (dist - attackRange) / dashClipLength;
         }
 
         playerState = PlayerState.Attacking;
@@ -113,6 +133,25 @@ public class MikuCharacter : MonoBehaviour
         else
         {
             playerState = PlayerState.Locomotion;
+        }
+    }
+
+    public void Dohit(AttackStep attackStep) 
+    {
+            
+    }
+
+    public void temp(float damage) 
+    {
+        weapon.GetCapsule(out Vector3 p1, out Vector3 p2);
+
+        // 캡슐(point1,2와 반지름)만큼 충돌 검사
+        Collider[] hits = Physics.OverlapCapsule(p1, p2, weapon.Radius, enemyLayer);
+
+        foreach (var hit in hits)
+        { 
+            Debug.Log($"{hit.name} 피격 / 데미지 {damage}");
+        
         }
     }
 
@@ -211,9 +250,54 @@ public class MikuCharacter : MonoBehaviour
         return closer;
     }
 
-    private void OnDrawGizmosSelected()
+    public void SnapToTarget() 
+    {
+        if (targetTransform == null) return;
+
+        Vector3 dir = targetTransform.position - transform.position;
+        dir.y = 0;
+        float dist = dir.magnitude; // 벡터사이의 거리
+
+        // 거리가 attackRange보다 멀때만 흡착
+        // 가까우면 X 
+        if (dist > attackRange) 
+        {
+            // 방향 * 1초안에 가야할 속도 * 프레임별로 가야하니까 deltaTime(0.0167)
+            // = 이번 프레임 이동량
+            Vector3 move = dir.normalized * snapSpeed * Time.deltaTime;
+            
+            // 거리 보정 
+            // 이번 프레임에 움직여야 할 거리보다, 남은 거리가 더 적으면
+            // 적은 거리만큼 움직여야함 ! 
+            // 이번 프레임거리만큼 움직이면 -> attackRange 보다 더 가까이 다다가게됨 
+            if (move.magnitude > dist - attackRange) 
+            {
+                // 이번 프레임 이동량 = 남은거리 만큼 
+                move = dir.normalized * (dist - attackRange);  
+            }
+
+            // 움직이기 
+            // ex) (0.033, 0, 0.044)
+            movement.MoveRaw(move); 
+        }
+        // 거리가 AttackRange보다 크면 
+        // -> Dash 애니메이션 종료 
+        else
+        {
+            animator.SetTrigger("DashEnd");   // 도착했으니 공격으로
+        }
+    }
+
+
+    private void OnDrawGizmos()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, searchRadius);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere (transform.position, dashThreshold);
     }
 }

@@ -10,6 +10,7 @@ public class MikuMovement : MonoBehaviour
     [SerializeField] private CharacterController controller;
     [SerializeField] private GameObject mainCamera;
 
+
     #region Camera Rotationa
     private float lookSensitivity = 0.05f;
 
@@ -59,6 +60,7 @@ public class MikuMovement : MonoBehaviour
     public LayerMask groundLayer;   // 캐릭터가 땅으로 인식하는 레이어
     #endregion
 
+
     private void Awake()
     {
         mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
@@ -88,6 +90,8 @@ public class MikuMovement : MonoBehaviour
     {
         CameraRotation(lookInput);
     }
+
+    public void MoveRaw(Vector3 delta) => controller.Move(delta);
 
     private void JumpAndGravity(bool jumpInput)
     {

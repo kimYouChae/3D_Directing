@@ -8,15 +8,16 @@ public class AttackState : StateMachineBehaviour
     /// ex) 스킬1 ,2는 true / 스킬 3은 false
     /// </summary>
 
-    [Range(0f, 1f)] public float hitboxOn = 0.3f;
-    [Range(0f, 1f)] public float hitboxOff = 0.5f;
     [Range(0f, 1f)] public float comboWindow = 0.5f; // 콤보 입력이 가능한 진행률
     [Range(0f, 1f)] public float changeState = 0.8f; // 다음 Attack으로 넘어가는 진행률 
+    [Range(0f, 1f)] public float hitTiming = 0.2f; // hit 시작하는 진행률 
+    [Range(0f, 1f)] public float hitTimingEnd = 0.7f; // hit 끝내는 진행률
+    public AttackStep step;
 
     private MikuCharacter character;
-    private bool isHitboxOn;
     private bool isWindowOpen;  // 입력 받을 수 있는 구간이 열려있는지 
     private bool doCombo;
+    private bool didHit;
 
     // 해당 상태 실행될 때 
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -27,9 +28,9 @@ public class AttackState : StateMachineBehaviour
         character.ComboQueue = false;
         character.IsPlayingAttack = true;
 
-        isHitboxOn = false;
         isWindowOpen = false;
         doCombo = false;
+        didHit = false;
     }
 
     // enter ~ exit 사이 매 프레임마다 
@@ -37,16 +38,16 @@ public class AttackState : StateMachineBehaviour
     {
         var t = stateInfo.normalizedTime;
 
-        if (!isHitboxOn && t > hitboxOn) 
-        {
-            character.OnHitBox();
-            isHitboxOn = true;
+        if (!didHit && t > hitTiming)
+        { 
+            didHit = true;
+            character.Dohit(step);
         }
 
-        if (isHitboxOn && t > hitboxOff) 
+        if (didHit && t > hitTimingEnd) 
         {
-            character.OffHitBox();
-            isHitboxOn = false;
+            didHit = false;
+            // character.
         }
 
         if (t > comboWindow && !isWindowOpen) 
