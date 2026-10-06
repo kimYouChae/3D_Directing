@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Unity.Cinemachine;
@@ -64,6 +65,9 @@ public class MikuCharacter : MonoBehaviour
 
     [SerializeField] private Transform blade;   // 칼 오브젝트 (대파)
     [SerializeField] private float bladeLength;
+
+    // 이번 공격에서 이미 맞은 적 (중복 타격 방지)
+    private HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
     public bool ComboQueue { get => comboQueue; set => comboQueue = value; }
     public bool IsWindowOpen { get => isWindowOpen; set => isWindowOpen = value; }
     public bool IsPlayingAttack { get => isPlayingAttack; set => isPlayingAttack = value; }
@@ -136,12 +140,13 @@ public class MikuCharacter : MonoBehaviour
         }
     }
 
-    public void Dohit(AttackStep attackStep) 
+    // 공격 시작 시 맞은 적 목록 초기화
+    public void ClearHitEnemies() 
     {
-            
+        hitEnemies.Clear();
     }
 
-    public void temp(float damage) 
+    public void CheckHit(float damage) 
     {
         weapon.GetCapsule(out Vector3 p1, out Vector3 p2);
 
@@ -149,19 +154,15 @@ public class MikuCharacter : MonoBehaviour
         Collider[] hits = Physics.OverlapCapsule(p1, p2, weapon.Radius, enemyLayer);
 
         foreach (var hit in hits)
-        { 
-            Debug.Log($"{hit.name} 피격 / 데미지 {damage}");
-        
-        }
-    }
+        {
+            Enemy enemy = hit.GetComponentInParent<Enemy>();
+            if (enemy == null) continue;
 
-    public void OnHitBox() 
-    {
-    
-    }
-    public void OffHitBox() 
-    {
-    
+            // 이미 맞은 적이면 pass
+            if (!hitEnemies.Add(enemy)) continue;
+
+            enemy.TakeDamage(damage);
+        }
     }
 
     public void IdleState() 

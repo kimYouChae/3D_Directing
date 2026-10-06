@@ -13,11 +13,11 @@ public class AttackState : StateMachineBehaviour
     [Range(0f, 1f)] public float hitTiming = 0.2f; // hit 시작하는 진행률 
     [Range(0f, 1f)] public float hitTimingEnd = 0.7f; // hit 끝내는 진행률
     public AttackStep step;
+    public float damage = 10f;
 
     private MikuCharacter character;
     private bool isWindowOpen;  // 입력 받을 수 있는 구간이 열려있는지 
     private bool doCombo;
-    private bool didHit;
 
     // 해당 상태 실행될 때 
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -30,7 +30,9 @@ public class AttackState : StateMachineBehaviour
 
         isWindowOpen = false;
         doCombo = false;
-        didHit = false;
+
+        // 새 공격 시작 -> 맞은 적 목록 초기화
+        character.ClearHitEnemies();
     }
 
     // enter ~ exit 사이 매 프레임마다 
@@ -38,17 +40,9 @@ public class AttackState : StateMachineBehaviour
     {
         var t = stateInfo.normalizedTime;
 
-        if (!didHit && t > hitTiming)
-        { 
-            didHit = true;
-            character.Dohit(step);
-        }
-
-        if (didHit && t > hitTimingEnd) 
-        {
-            didHit = false;
-            // character.
-        }
+        // hit 구간 안에 있으면 매 프레임 판정 (중복은 HashSet이 걸러줌)
+        if (t >= hitTiming && t <= hitTimingEnd)
+            character.CheckHit(damage);
 
         if (t > comboWindow && !isWindowOpen) 
         {

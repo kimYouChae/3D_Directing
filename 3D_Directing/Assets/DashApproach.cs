@@ -2,20 +2,34 @@ using UnityEngine;
 
 public class DashApproach : StateMachineBehaviour
 {
+    [SerializeField] private float maxDashTime = 1.5f;
 
     private MikuCharacter character;
+    private bool dashEnded;
+    private float elapsed;
+
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         character = animator.GetComponent<MikuCharacter>();
+        dashEnded = false;
+        elapsed = 0f;
+        animator.ResetTrigger("DashEnd");   // 이전에 남은 트리거 제거
     }
 
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
+        if (dashEnded) return;
+        elapsed += Time.deltaTime;
+
+        // 도착 시 DashEnd 트리거는 SnapToTarget 안에서 처리
         character.SnapToTarget();
 
-        // 안전장치 혹시나 같히게 되면 상태변경 
-        if (stateInfo.normalizedTime >= 1f)
+        // 시간 초과 시 강제 종료
+        if (elapsed >= maxDashTime)
+        {
             animator.SetTrigger("DashEnd");
+            dashEnded = true;
+        }
     }
 
     // OnStateExit is called when a transition ends and the state machine finishes evaluating this state
