@@ -53,6 +53,15 @@ public class MikuCharacter : MonoBehaviour
     private bool sprintInput;
     #endregion
 
+    #region Dash
+    private float dashAverageSpeed = 3f; // 평균 대시 속도 
+    private float dashMaxSpeed = 0.3f; // 최소 대시 시간 (> 들어가는 전환 + 나가는 전환)
+    private float dashMinSpeed = 0.6f; // 최대 대시 시간 
+    private float dashToAttackAnimationBlendTime = 0.15f;
+
+    #endregion
+
+
     #region Attack
     [Header("===Attack===")]
     [SerializeField] private WeaponBlade weapon;
@@ -87,6 +96,8 @@ public class MikuCharacter : MonoBehaviour
         {
             case PlayerState.Locomotion:
                 movement.Tick(jumpInput, sprintInput, moveInput);
+                Vector3 before = transform.position;
+                Debug.DrawLine(before, transform.position, Color.cyan, 2f);   // 일반 이동 경로 (하늘색)
                 jumpInput = false;
                 break;
             case PlayerState.Attacking:
@@ -125,15 +136,19 @@ public class MikuCharacter : MonoBehaviour
             {
                 // 실제로 이동할 거리 
                 float travel = dist - attackRange;
-                // 대시 시간 = 거리 / 임시 시간 (최대, 최소 설정)
-                float dashTime = Mathf.Clamp(travel / 3f, 0.25f, 0.6f);
+                // 대시 시간 = 거리 / 임시 시간 
+                // 최소, 최대 설정 
+                float dashTime = Mathf.Clamp(travel / dashAverageSpeed, dashMaxSpeed, dashMinSpeed);
 
                 // 스냅 속도 = 거리 / 시간 
                 snapSpeed = travel / dashTime;
 
                 // 애니메이션 배속 ( 배속이 0.5이면 애니메이션 재생속도가 2배 )
                 animator.SetFloat(DashSpeedParameter, dashAnimation.length / dashTime);
+
+                DashLog.Log($"Attack target={targetTransform.name} dist={dist:F3} dashTime={dashTime:F3}");
             }
+            else DashLog.Log($"Attack(no dash) target={targetTransform.name} dist={dist:F3}");
         }
 
 
@@ -152,6 +167,7 @@ public class MikuCharacter : MonoBehaviour
         }
         else
         {
+            DashLog.Log($"BackToLocomotion remain={RemainDistance():F3}");
             playerState = PlayerState.Locomotion;
         }
     }
@@ -186,6 +202,8 @@ public class MikuCharacter : MonoBehaviour
     public void IdleState() 
     {
         playerState = PlayerState.Locomotion;
+
+        DashLog.Log($"BackToLocomotion remain={RemainDistance():F3}");
     }
 
     private void ReadInput()
@@ -300,7 +318,19 @@ public class MikuCharacter : MonoBehaviour
             // 움직이기 
             // ex) (0.033, 0, 0.044)
             movement.MoveRaw(move);
+
+            DashLog.Log($"Move dt={Time.deltaTime:F4} remain={dist - attackRange:F3} move={move.magnitude:F3}");
         }
+    }
+
+    // 타겟까지 남은 거리 (attackRange 기준). 타겟이 없으면 -1
+    public float RemainDistance()
+    {
+        if (targetTransform == null) return -1f;
+
+        Vector3 dir = targetTransform.position - transform.position;
+        dir.y = 0;
+        return dir.magnitude - attackRange;
     }
 
     // 공격으로 전환해도 되는지 여부를 리턴
@@ -318,9 +348,10 @@ public class MikuCharacter : MonoBehaviour
         // 남은 거리 < 속도 * 시간 
         float remain = dist - attackRange;
 
-        // 남은 거리를 전환 시간 안에 갈 수 있으면 공격으로 넘어갈 준비 완료
-        // 0.25 : Dash > Attack 애니메이션으로 전환 blend 시간 
-        return remain <= snapSpeed * 0.25f;
+        // 지금 속도로 0.25초 동안 갈 수 있는 거리 ( 거 = 속 * 시 )
+        // 갈 수 있으면 true, 아니면 false 
+        // N : Dash > Attack 애니메이션으로 전환 blend 시간 
+        return remain <= snapSpeed * dashToAttackAnimationBlendTime;
     }
 
 

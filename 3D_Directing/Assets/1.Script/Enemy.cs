@@ -8,7 +8,7 @@ public class Enemy : MonoBehaviour
     public void TakeDamage(float damage)
     {
         hp -= damage;
-        Debug.Log($"{name} 피격 / 데미지 {damage} / 남은 HP {hp}");
+        // Debug.Log($"{name} 피격 / 데미지 {damage} / 남은 HP {hp}");
 
         // hp가 0 이하가 되면 파괴
         if (hp <= 0)

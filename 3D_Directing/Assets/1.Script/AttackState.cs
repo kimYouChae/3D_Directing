@@ -32,6 +32,8 @@ public class AttackState : StateMachineBehaviour
 
         // 새 공격 시작 -> 맞은 적 목록 초기화
         character.ClearHitEnemies();
+
+        DashLog.Log($"AttackEnter step={step} remain={character.RemainDistance():F3}");
     }
 
     // enter ~ exit 사이 매 프레임마다 
