@@ -18,18 +18,26 @@ public class DashApproach : StateMachineBehaviour
 
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        if (dashEnded) return;
         elapsed += Time.deltaTime;
 
-        // 도착 시 DashEnd 트리거는 SnapToTarget 안에서 처리
-        character.SnapToTarget();
+        // 움직이기 
+        character.MoveToTarget();
 
-        // 시간 초과 시 강제 종료
-        if (elapsed >= maxDashTime)
+        // DashEnD 를 실행할 준비가 되었는지 확인 
+        bool ready = character.CanStartAttack();
+
+        if (!dashEnded) 
         {
-            animator.SetTrigger("DashEnd");
-            dashEnded = true;
+            // 전환 준비가 되었거나
+            // max 시간 초과시
+            // > DashEnd 실행 
+            if ( ready || elapsed >= maxDashTime)
+            {
+                animator.SetTrigger("DashEnd");
+                dashEnded = true;
+            }
         }
+        
     }
 
     // OnStateExit is called when a transition ends and the state machine finishes evaluating this state

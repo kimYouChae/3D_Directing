@@ -1,5 +1,5 @@
+
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Unity.Cinemachine;
 using UnityEngine;
@@ -105,8 +105,9 @@ public class MikuCharacter : MonoBehaviour
         animator.SetBool(HasTargetParameter , false);
 
         targetTransform = FindTarget();
-        Debug.Log(targetTransform != null ? $"타겟: {targetTransform.name}" : "타겟 없음");
-        
+        if(targetTransform == null)
+            Debug.Log( "타겟 없음");
+
         playerState = PlayerState.Attacking;
         
         if (targetTransform != null)
@@ -268,44 +269,58 @@ public class MikuCharacter : MonoBehaviour
         return closer;
     }
 
-    public void SnapToTarget() 
+    public void MoveToTarget()
     {
         if (targetTransform == null) return;
 
         Vector3 dir = targetTransform.position - transform.position;
         dir.y = 0;
-        float dist = dir.magnitude; // 벡터사이의 거리
+        float dist = dir.magnitude;
 
         // 거리가 attackRange보다 멀때만 흡착
         // 가까우면 X 
         // 0.01f : 허용 오차 
-        if (dist > attackRange + 0.01f) 
+        if (dist > attackRange + 0.01f)
         {
-            
+
             // 방향 * 1초안에 가야할 속도 * 프레임별로 가야하니까 deltaTime(0.0167)
             // = 이번 프레임 이동량
             Vector3 move = dir.normalized * snapSpeed * Time.deltaTime;
-            
+
             // 거리 보정 
             // 이번 프레임에 움직여야 할 거리보다, 남은 거리가 더 적으면
             // 적은 거리만큼 움직여야함 ! 
             // 이번 프레임거리만큼 움직이면 -> attackRange 보다 더 가까이 다다가게됨 
-            if (move.magnitude > dist - attackRange) 
+            if (move.magnitude > dist - attackRange)
             {
                 // 이번 프레임 이동량 = 남은거리 만큼 
-                move = dir.normalized * (dist - attackRange);  
+                move = dir.normalized * (dist - attackRange);
             }
 
             // 움직이기 
             // ex) (0.033, 0, 0.044)
-            movement.MoveRaw(move); 
+            movement.MoveRaw(move);
         }
-        // 거리가 AttackRange보다 크면 
-        // -> Dash 애니메이션 종료 
-        else
-        {
-            animator.SetTrigger("DashEnd");   // 도착했으니 공격으로
-        }
+    }
+
+    // 공격으로 전환해도 되는지 여부를 리턴
+
+    public bool CanStartAttack() 
+    {
+        if (targetTransform == null) return true;
+
+        Vector3 dir = targetTransform.position - transform.position;
+        dir.y = 0;
+        float dist = dir.magnitude;
+
+        // 남은 거리가 0.25초안에 끝나면 미리 dashend로 전환하기
+        // ( dash -> attack애니메이션 전환시간 )
+        // 남은 거리 < 속도 * 시간 
+        float remain = dist - attackRange;
+
+        // 남은 거리를 전환 시간 안에 갈 수 있으면 공격으로 넘어갈 준비 완료
+        // 0.25 : Dash > Attack 애니메이션으로 전환 blend 시간 
+        return remain <= snapSpeed * 0.25f;
     }
 
 
