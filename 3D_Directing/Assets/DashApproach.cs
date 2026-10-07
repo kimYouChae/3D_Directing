@@ -14,6 +14,8 @@ public class DashApproach : StateMachineBehaviour
         dashEnded = false;
         elapsed = 0f;
         animator.ResetTrigger("DashEnd");   // 이전에 남은 트리거 제거
+
+        DashLog.Log($"DashEnter state={stateInfo.shortNameHash} remain={character.RemainDistance():F3}");
     }
 
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -33,6 +35,8 @@ public class DashApproach : StateMachineBehaviour
             // > DashEnd 실행 
             if ( ready || elapsed >= maxDashTime)
             {
+                DashLog.Log($"DashEnd reason={(ready ? "ready" : "timeout")} elapsed={elapsed:F3} remain={character.RemainDistance():F3}");
+
                 animator.SetTrigger("DashEnd");
                 dashEnded = true;
             }
