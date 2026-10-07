@@ -13,7 +13,6 @@ public class AttackState : StateMachineBehaviour
     [Range(0f, 1f)] public float hitTiming = 0.2f; // hit 시작하는 진행률 
     [Range(0f, 1f)] public float hitTimingEnd = 0.7f; // hit 끝내는 진행률
     public AttackStep step;
-    public float damage = 10f;
 
     private MikuCharacter character;
     private bool isWindowOpen;  // 입력 받을 수 있는 구간이 열려있는지 
@@ -42,7 +41,7 @@ public class AttackState : StateMachineBehaviour
 
         // hit 구간 안에 있으면 매 프레임 판정 (중복은 HashSet이 걸러줌)
         if (t >= hitTiming && t <= hitTimingEnd)
-            character.CheckHit(damage);
+            character.CheckHit(step);
 
         if (t > comboWindow && !isWindowOpen) 
         {
