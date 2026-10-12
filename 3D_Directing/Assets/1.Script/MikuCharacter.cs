@@ -9,7 +9,8 @@ using UnityEngine.Playables;
 public enum PlayerState 
 { 
     Locomotion, 
-    Attacking, 
+    Attacking,
+    Dodging,
     Cutscene 
 }
 public enum AttackStep { First, Second, Third }
@@ -80,6 +81,21 @@ public class MikuCharacter : MonoBehaviour
     public bool IsPlayingAttack { get => isPlayingAttack; set => isPlayingAttack = value; }
     #endregion
 
+    #region Dodge
+    [Header("===Dodge===")]
+    [SerializeField] AnimationClip dodgeAnimation;
+    private float dodgeDistance = 2f;   // 이동거리
+    private float dodgeDuration = 0.5f; // 대시 시간
+    private AnimationCurve dodgeCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+
+    private Vector3 lastMoveDir;    // 마지막 이동 방향 (월드)
+    private Vector3 dodgeDir;       // 닷지 방향 
+    private float dodgeElapsed;     // 진행도 
+
+    const string DodgeStateName = "Dodge";
+    const string DodgeSpeedParameter = "DodgeSpeed";
+    #endregion
+
     private void Start()
     {
         defaultCam.Priority = 10;
@@ -101,6 +117,9 @@ public class MikuCharacter : MonoBehaviour
                 jumpInput = false;
                 break;
             case PlayerState.Attacking:
+                break;
+            case PlayerState.Dodging:
+                TickDodge();
                 break;
             case PlayerState.Cutscene:
                 break;
@@ -201,6 +220,9 @@ public class MikuCharacter : MonoBehaviour
 
     public void IdleState() 
     {
+        // Dogde에서 Idle로 전환할 수 있도록 막음 
+        if (playerState == PlayerState.Dodging) return; 
+
         playerState = PlayerState.Locomotion;
 
         DashLog.Log($"BackToLocomotion remain={RemainDistance():F3}");
@@ -220,6 +242,14 @@ public class MikuCharacter : MonoBehaviour
         if (kb.wKey.isPressed) y += 1f;
         moveInput = new Vector2(x, y).normalized;
 
+        // 대시 입력
+        if (moveInput != Vector2.zero)
+        {
+            float yaw = Mathf.Atan2(moveInput.x, moveInput.y) * Mathf.Rad2Deg
+                        + mainCamera.transform.eulerAngles.y;
+            lastMoveDir = Quaternion.Euler(0, yaw, 0) * Vector3.forward;
+        }
+
         // 마우스 
         lookInput = mouse.delta.ReadValue();
 
@@ -229,7 +259,7 @@ public class MikuCharacter : MonoBehaviour
         // 달리기 ( 키가 눌려있는 모든 프레임 동안 )
         sprintInput = kb.leftShiftKey.isPressed;
 
-        // 마우스 입력된 순간 
+        // 왼 마우스 입력된 순간 
         if (mouse.leftButton.wasPressedThisFrame)
         {
             // attack중이고
@@ -249,6 +279,65 @@ public class MikuCharacter : MonoBehaviour
             }
         }
 
+        // 오른쪽 마우스 입력된 순간
+        if (mouse.rightButton.wasPressedThisFrame) 
+        {
+            // 닷지 하고있거나 컷씬이 아닐 때
+            // Attack과 Dash에서는 닷지 가능
+            if (playerState != PlayerState.Dodging
+                && playerState != PlayerState.Cutscene) 
+            {
+                StartDodge();
+            }
+        }
+
+    }
+
+    private void StartDodge()
+    {
+        PlayerState from = playerState;
+        playerState = PlayerState.Dodging;
+        dodgeElapsed = 0;
+
+        // 닷지 방향 정하기 
+        dodgeDir = lastMoveDir == Vector3.zero ? Vector3.forward : lastMoveDir;
+        transform.rotation = Quaternion.LookRotation(dodgeDir);
+
+
+        // 클립 재생 속도 > 대시 시간에 맞춤
+        if (dodgeAnimation != null)
+            animator.SetFloat(DodgeSpeedParameter, dodgeAnimation.length / dodgeDuration);
+
+        // 애니메이션 이름으로 전환 
+        // 애니메이터에 화살표 연결없이 이름으로 전환할 수 있음
+        // (애니메이션 이름, 블랜드 시간)
+        animator.CrossFadeInFixedTime(DodgeStateName, 0.05f);
+
+        DashLog.Log($"DodgeStart from={from} dir={dodgeDir}");
+    }
+
+    private void TickDodge() 
+    {
+        // 진행도 계산: 지난 프레임 t0 → 이번 프레임 t1 (0~1)
+        float t0 = dodgeElapsed / dodgeDuration;
+        dodgeElapsed += Time.deltaTime;
+        float t1 = Mathf.Min(dodgeElapsed / dodgeDuration, 1f);
+
+        // 이번 프레임 이동량 = 커브 증가분 × 총거리
+        float step = (dodgeCurve.Evaluate(t1) - dodgeCurve.Evaluate(t0)) * dodgeDistance;
+        movement.MoveRaw(dodgeDir * step);
+
+        // 끝났으면 종료
+        if (t1 >= 1f) EndDodge();
+        
+        // 이번프레임에 걸린시간 , 진행도 , 이번 프레임 이동량
+        DashLog.Log($"DodgeMove dt={Time.deltaTime:F4} t={t1:F3} step={step:F3}");
+    }
+
+    private void EndDodge() 
+    {
+        playerState = PlayerState.Locomotion;
+        DashLog.Log($"DodgeEnd elapsed={dodgeElapsed:F3}");
     }
 
     private Transform FindTarget() 
