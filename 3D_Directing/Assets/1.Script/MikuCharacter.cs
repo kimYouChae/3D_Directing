@@ -88,6 +88,10 @@ public class MikuCharacter : MonoBehaviour
     private float dodgeDuration = 0.5f; // 대시 시간
     private AnimationCurve dodgeCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
+    // 퍼펙트 회피 슬로우 (x: 회피 진행도 0~1, y: timeScale)
+    [SerializeField] private AnimationCurve perfectDodgeTimeCurve;
+    private bool isPerfectDodge;    // 이번 회피가 퍼펙트인지
+
     private Vector3 lastMoveDir;    // 마지막 이동 방향 (월드)
     private Vector3 dodgeDir;       // 닷지 방향 
     private float dodgeElapsed;     // 진행도 
@@ -291,13 +295,27 @@ public class MikuCharacter : MonoBehaviour
             }
         }
 
+        // 테스트: 퍼펙트 회피 강제 발동
+        if (kb.tKey.wasPressedThisFrame)
+        {
+            if (playerState != PlayerState.Dodging
+                && playerState != PlayerState.Cutscene)
+            {
+                StartDodge(true);
+            }
+        }
+
     }
 
-    private void StartDodge()
+    private void StartDodge(bool perfect = false)
     {
         PlayerState from = playerState;
         playerState = PlayerState.Dodging;
         dodgeElapsed = 0;
+
+        // 퍼펙트면 커브 시작값으로 슬로우
+        isPerfectDodge = perfect;
+        if (perfect) Time.timeScale = perfectDodgeTimeCurve.Evaluate(0f);
 
         // 닷지 방향 정하기 
         dodgeDir = lastMoveDir == Vector3.zero ? Vector3.forward : lastMoveDir;
@@ -313,7 +331,7 @@ public class MikuCharacter : MonoBehaviour
         // (애니메이션 이름, 블랜드 시간)
         animator.CrossFadeInFixedTime(DodgeStateName, 0.05f);
 
-        DashLog.Log($"DodgeStart from={from} dir={dodgeDir}");
+        DashLog.Log($"DodgeStart from={from} dir={dodgeDir} perfect={perfect} real={Time.unscaledTime:F3}");
     }
 
     private void TickDodge() 
@@ -322,6 +340,11 @@ public class MikuCharacter : MonoBehaviour
         float t0 = dodgeElapsed / dodgeDuration;
         dodgeElapsed += Time.deltaTime;
         float t1 = Mathf.Min(dodgeElapsed / dodgeDuration, 1f);
+
+        // 퍼펙트 슬로우: 진행도에 따라 timeScale 조절
+        // 0이 되면 deltaTime도 0 -> t1이 멈춰 회피가 안 끝나므로 하한 0.05
+        if (isPerfectDodge)
+            Time.timeScale = Mathf.Max(perfectDodgeTimeCurve.Evaluate(t1), 0.05f);
 
         // 이번 프레임 이동량 = 커브 증가분 × 총거리
         float step = (dodgeCurve.Evaluate(t1) - dodgeCurve.Evaluate(t0)) * dodgeDistance;
@@ -337,7 +360,15 @@ public class MikuCharacter : MonoBehaviour
     private void EndDodge() 
     {
         playerState = PlayerState.Locomotion;
-        DashLog.Log($"DodgeEnd elapsed={dodgeElapsed:F3}");
+
+        // 슬로우 복구 (회피 종료 지점은 여기 하나뿐)
+        if (isPerfectDodge)
+        {
+            Time.timeScale = 1f;
+            isPerfectDodge = false;
+        }
+
+        DashLog.Log($"DodgeEnd elapsed={dodgeElapsed:F3} real={Time.unscaledTime:F3}");
     }
 
     private Transform FindTarget() 
