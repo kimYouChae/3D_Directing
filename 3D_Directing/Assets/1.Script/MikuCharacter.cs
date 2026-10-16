@@ -5,6 +5,7 @@ using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Playables;
+using UnityEngine.Rendering;
 
 public enum PlayerState 
 { 
@@ -92,6 +93,17 @@ public class MikuCharacter : MonoBehaviour
     [SerializeField] private AnimationCurve perfectDodgeTimeCurve;
     private bool isPerfectDodge;    // 이번 회피가 퍼펙트인지
 
+    // 퍼펙트 회피 화면 어두워짐 (x: 회피 진행도 0~1, y: Volume weight)
+    [SerializeField] private Volume dodgeFXVolume;
+    [SerializeField] private AnimationCurve perfectDodgeVolumeCurve;
+
+    // 퍼펙트 회피 잔상
+    [SerializeField] private Material afterImageMaterial;
+    [SerializeField] private float afterImageInterval = 0.1f;   // 진행도 간격
+    [SerializeField] private float afterImageLifeTime = 0.3f;   // 잔상 유지 시간 (게임 시간)
+    private SkinnedMeshRenderer[] afterImageRenderers;
+    private float nextAfterImageT;  // 다음 잔상을 찍을 진행도
+
     private Vector3 lastMoveDir;    // 마지막 이동 방향 (월드)
     private Vector3 dodgeDir;       // 닷지 방향 
     private float dodgeElapsed;     // 진행도 
@@ -106,6 +118,7 @@ public class MikuCharacter : MonoBehaviour
         playerState = PlayerState.Locomotion;
 
         animator = GetComponent<Animator>();    
+        afterImageRenderers = GetComponentsInChildren<SkinnedMeshRenderer>();
     }
 
     private void Update()
@@ -316,6 +329,8 @@ public class MikuCharacter : MonoBehaviour
         // 퍼펙트면 커브 시작값으로 슬로우
         isPerfectDodge = perfect;
         if (perfect) Time.timeScale = perfectDodgeTimeCurve.Evaluate(0f);
+        if (perfect) dodgeFXVolume.weight = perfectDodgeVolumeCurve.Evaluate(0f);
+        if (perfect) nextAfterImageT = 0f;
 
         // 닷지 방향 정하기 
         dodgeDir = lastMoveDir == Vector3.zero ? Vector3.forward : lastMoveDir;
@@ -346,6 +361,17 @@ public class MikuCharacter : MonoBehaviour
         if (isPerfectDodge)
             Time.timeScale = Mathf.Max(perfectDodgeTimeCurve.Evaluate(t1), 0.05f);
 
+        // 퍼펙트 화면 어두워짐: 슬로우와 같은 진행도로 weight 조절
+        if (isPerfectDodge)
+            dodgeFXVolume.weight = perfectDodgeVolumeCurve.Evaluate(t1);
+
+        // 퍼펙트 잔상: 진행도가 interval만큼 오를 때마다 스냅샷
+        if (isPerfectDodge && t1 >= nextAfterImageT)
+        {
+            AfterImage.Spawn(afterImageRenderers, afterImageMaterial, afterImageLifeTime);
+            nextAfterImageT += afterImageInterval;
+        }
+
         // 이번 프레임 이동량 = 커브 증가분 × 총거리
         float step = (dodgeCurve.Evaluate(t1) - dodgeCurve.Evaluate(t0)) * dodgeDistance;
         movement.MoveRaw(dodgeDir * step);
@@ -354,7 +380,7 @@ public class MikuCharacter : MonoBehaviour
         if (t1 >= 1f) EndDodge();
         
         // 이번프레임에 걸린시간 , 진행도 , 이번 프레임 이동량
-        DashLog.Log($"DodgeMove dt={Time.deltaTime:F4} t={t1:F3} step={step:F3}");
+        DashLog.Log($"DodgeMove dt={Time.deltaTime:F4} t={t1:F3} step={step:F3} ts={Time.timeScale:F2} w={dodgeFXVolume.weight:F2}");
     }
 
     private void EndDodge() 
@@ -365,6 +391,7 @@ public class MikuCharacter : MonoBehaviour
         if (isPerfectDodge)
         {
             Time.timeScale = 1f;
+            dodgeFXVolume.weight = 0f;
             isPerfectDodge = false;
         }
 
