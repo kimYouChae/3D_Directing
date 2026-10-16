@@ -353,6 +353,7 @@ public class MikuCharacter : MonoBehaviour
         dodgeElapsed += Time.deltaTime;
         float t1 = Mathf.Min(dodgeElapsed / dodgeDuration, 1f);
 
+        // 슬로우 + 화면 암전 
         if (isPerfectDodge) TickPerfectDodgeFX(t1);
 
         // 이번 프레임 이동량 = 커브 증가분 × 총거리
