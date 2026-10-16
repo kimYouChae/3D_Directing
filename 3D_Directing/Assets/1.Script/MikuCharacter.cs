@@ -326,11 +326,8 @@ public class MikuCharacter : MonoBehaviour
         playerState = PlayerState.Dodging;
         dodgeElapsed = 0;
 
-        // 퍼펙트면 커브 시작값으로 슬로우
         isPerfectDodge = perfect;
-        if (perfect) Time.timeScale = perfectDodgeTimeCurve.Evaluate(0f);
-        if (perfect) dodgeFXVolume.weight = perfectDodgeVolumeCurve.Evaluate(0f);
-        if (perfect) nextAfterImageT = 0f;
+        if (perfect) StartPerfectDodgeFX();
 
         // 닷지 방향 정하기 
         dodgeDir = lastMoveDir == Vector3.zero ? Vector3.forward : lastMoveDir;
@@ -356,21 +353,7 @@ public class MikuCharacter : MonoBehaviour
         dodgeElapsed += Time.deltaTime;
         float t1 = Mathf.Min(dodgeElapsed / dodgeDuration, 1f);
 
-        // 퍼펙트 슬로우: 진행도에 따라 timeScale 조절
-        // 0이 되면 deltaTime도 0 -> t1이 멈춰 회피가 안 끝나므로 하한 0.05
-        if (isPerfectDodge)
-            Time.timeScale = Mathf.Max(perfectDodgeTimeCurve.Evaluate(t1), 0.05f);
-
-        // 퍼펙트 화면 어두워짐: 슬로우와 같은 진행도로 weight 조절
-        if (isPerfectDodge)
-            dodgeFXVolume.weight = perfectDodgeVolumeCurve.Evaluate(t1);
-
-        // 퍼펙트 잔상: 진행도가 interval만큼 오를 때마다 스냅샷
-        if (isPerfectDodge && t1 >= nextAfterImageT)
-        {
-            AfterImage.Spawn(afterImageRenderers, afterImageMaterial, afterImageLifeTime);
-            nextAfterImageT += afterImageInterval;
-        }
+        if (isPerfectDodge) TickPerfectDodgeFX(t1);
 
         // 이번 프레임 이동량 = 커브 증가분 × 총거리
         float step = (dodgeCurve.Evaluate(t1) - dodgeCurve.Evaluate(t0)) * dodgeDistance;
@@ -387,16 +370,50 @@ public class MikuCharacter : MonoBehaviour
     {
         playerState = PlayerState.Locomotion;
 
-        // 슬로우 복구 (회피 종료 지점은 여기 하나뿐)
+        // 연출 복구 (회피 종료 지점은 여기 하나뿐)
         if (isPerfectDodge)
         {
-            Time.timeScale = 1f;
-            dodgeFXVolume.weight = 0f;
+            EndPerfectDodgeFX();
             isPerfectDodge = false;
         }
 
         DashLog.Log($"DodgeEnd elapsed={dodgeElapsed:F3} real={Time.unscaledTime:F3}");
     }
+
+    #region PerfectDodgeFX
+    // 퍼펙트 회피 연출 (슬로우 + 화면 어두워짐 + 잔상)
+    // 세 연출 모두 회피 진행도(t, 0~1) 하나로 움직인다
+
+    private void StartPerfectDodgeFX()
+    {
+        Time.timeScale = perfectDodgeTimeCurve.Evaluate(0f);
+        dodgeFXVolume.weight = perfectDodgeVolumeCurve.Evaluate(0f);
+        nextAfterImageT = 0f;
+    }
+
+    private void TickPerfectDodgeFX(float t)
+    {
+        // 슬로우: 진행도에 따라 timeScale 조절
+        // 0이 되면 deltaTime도 0 -> t가 멈춰 회피가 안 끝나므로 하한 0.05
+        Time.timeScale = Mathf.Max(perfectDodgeTimeCurve.Evaluate(t), 0.05f);
+
+        // 화면 어두워짐: 같은 진행도로 Volume weight 조절
+        dodgeFXVolume.weight = perfectDodgeVolumeCurve.Evaluate(t);
+
+        // 잔상: 진행도가 interval만큼 오를 때마다 스냅샷
+        if (t >= nextAfterImageT)
+        {
+            AfterImage.Spawn(afterImageRenderers, afterImageMaterial, afterImageLifeTime);
+            nextAfterImageT += afterImageInterval;
+        }
+    }
+
+    private void EndPerfectDodgeFX()
+    {
+        Time.timeScale = 1f;
+        dodgeFXVolume.weight = 0f;
+    }
+    #endregion
 
     private Transform FindTarget() 
     {
