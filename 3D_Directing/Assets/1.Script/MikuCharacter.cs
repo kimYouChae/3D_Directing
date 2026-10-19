@@ -91,6 +91,8 @@ public class MikuCharacter : MonoBehaviour
 
     // 퍼펙트 회피 슬로우 (x: 회피 진행도 0~1, y: timeScale)
     [SerializeField] private AnimationCurve perfectDodgeTimeCurve;
+    // 퍼펙트 회피 판정 반경 (이 안에 창이 열린 적이 있으면 퍼펙트)
+    [SerializeField] private float perfectDodgeRadius = 1.5f;
     private bool isPerfectDodge;    // 이번 회피가 퍼펙트인지
 
     // 퍼펙트 회피 화면 어두워짐 (x: 회피 진행도 0~1, y: Volume weight)
@@ -304,17 +306,7 @@ public class MikuCharacter : MonoBehaviour
             if (playerState != PlayerState.Dodging
                 && playerState != PlayerState.Cutscene) 
             {
-                StartDodge();
-            }
-        }
-
-        // 테스트: 퍼펙트 회피 강제 발동
-        if (kb.tKey.wasPressedThisFrame)
-        {
-            if (playerState != PlayerState.Dodging
-                && playerState != PlayerState.Cutscene)
-            {
-                StartDodge(true);
+                StartDodge(CheckPerfectDodge());
             }
         }
 
@@ -379,6 +371,22 @@ public class MikuCharacter : MonoBehaviour
         }
 
         DashLog.Log($"DodgeEnd elapsed={dodgeElapsed:F3} real={Time.unscaledTime:F3}");
+    }
+
+    // 반경 안에 창이 열린 적이 있으면 그 창을 소비하고 true
+    private bool CheckPerfectDodge()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, perfectDodgeRadius, enemyLayer);
+        foreach (Collider hit in hits)
+        {
+            Enemy enemy = hit.GetComponentInParent<Enemy>();
+            if (enemy == null || !enemy.IsPerfectWindowOpen) continue;
+
+            DashLog.Log($"PerfectCheck hit={enemy.name} since={enemy.TimeSinceFlash:F3}");
+            enemy.ConsumePerfectWindow();   // 한 번 반짝임에 퍼펙트 한 번
+            return true;
+        }
+        return false;
     }
 
     #region PerfectDodgeFX
@@ -530,5 +538,8 @@ public class MikuCharacter : MonoBehaviour
 
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere (transform.position, dashThreshold);
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, perfectDodgeRadius);
     }
 }
