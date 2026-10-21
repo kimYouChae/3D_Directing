@@ -14,6 +14,7 @@ public class DashApproach : StateMachineBehaviour
         dashEnded = false;
         elapsed = 0f;
         animator.ResetTrigger("DashEnd");   // 이전에 남은 트리거 제거
+        character.IsApproaching = true;
 
         DashLog.Log($"DashEnter state={stateInfo.shortNameHash} remain={character.RemainDistance():F3}");
     }
@@ -38,6 +39,7 @@ public class DashApproach : StateMachineBehaviour
                 DashLog.Log($"DashEnd reason={(ready ? "ready" : "timeout")} elapsed={elapsed:F3} remain={character.RemainDistance():F3}");
 
                 animator.SetTrigger("DashEnd");
+                character.IsApproaching = false;    // 여기부터는 공격 애니로 넘어가는 중 -> 스킬 캔슬 불가
                 dashEnded = true;
             }
         }

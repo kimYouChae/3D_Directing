@@ -26,6 +26,7 @@ public class AttackState : StateMachineBehaviour
         character.IsWindowOpen = false;
         character.ComboQueue = false;
         character.IsPlayingAttack = true;
+        character.IsApproaching = false;
 
         isWindowOpen = false;
         doCombo = false;

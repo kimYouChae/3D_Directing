@@ -12,6 +12,7 @@ public enum PlayerState
     Locomotion, 
     Attacking,
     Dodging,
+    Skill,
     Cutscene 
 }
 public enum AttackStep { First, Second, Third }
@@ -47,6 +48,8 @@ public class MikuCharacter : MonoBehaviour
     const string AttackParameter = "Attack";
     const string HasTargetParameter = "HasTarget";
     const string DashSpeedParameter = "DashSpeed";
+    const string SkillIndexParameter = "SkillIndex";   // Dash 뒤 어느 스킬로 갈지 (0 = 기본 공격)
+    const string DashStateName = "Dash";
 
     #region Input
     private Vector2 moveInput;
@@ -114,6 +117,14 @@ public class MikuCharacter : MonoBehaviour
     const string DodgeSpeedParameter = "DodgeSpeed";
     #endregion
 
+    #region Skill
+    private ISkill[] skills;        // 1, 2, 3 키 순서
+    private ISkill currentSkill;    // 지금 사용 중인 스킬 (없으면 null)
+    private bool isApproaching;     // 콤보 사이 접근 대시 중인지 (DashApproach / AttackState가 관리)
+    public bool IsApproaching { get => isApproaching; set => isApproaching = value; }
+    public LayerMask EnemyLayer => enemyLayer;
+    #endregion
+
     private void Start()
     {
         defaultCam.Priority = 10;
@@ -121,6 +132,14 @@ public class MikuCharacter : MonoBehaviour
 
         animator = GetComponent<Animator>();    
         afterImageRenderers = GetComponentsInChildren<SkinnedMeshRenderer>();
+
+        // 데이터는 지금은 각 스킬 생성자에 하드코딩
+        skills = new ISkill[]
+        {
+            new MagicSkill(this),
+            new UppercutSkill(this),
+            new SlamSkill(this),
+        };
     }
 
     private void Update()
@@ -152,6 +171,7 @@ public class MikuCharacter : MonoBehaviour
     private void Attack() 
     {
         animator.SetBool(HasTargetParameter , false);
+        isApproaching = false;
 
         targetTransform = FindTarget();
         if(targetTransform == null)
@@ -160,41 +180,51 @@ public class MikuCharacter : MonoBehaviour
         playerState = PlayerState.Attacking;
         
         if (targetTransform != null)
-        {
-            Vector3 dir = targetTransform.position - transform.position;
-            dir.y = 0;
-            transform.rotation = Quaternion.LookRotation(dir);
-
-            float dist = dir.magnitude; // 적과 나 사이의 거리
-            bool needDash = dist > dashThreshold;   // dashThresh 보다 길면 true
-            animator.SetBool(HasTargetParameter, needDash); // dash 애니메이션 
-
-            // 대시가 필요하면
-            if (needDash) 
-            {
-                // 실제로 이동할 거리 
-                float travel = dist - attackRange;
-                // 대시 시간 = 거리 / 임시 시간 
-                // 최소, 최대 설정 
-                float dashTime = Mathf.Clamp(travel / dashAverageSpeed, dashMaxSpeed, dashMinSpeed);
-
-                // 스냅 속도 = 거리 / 시간 
-                snapSpeed = travel / dashTime;
-
-                // 애니메이션 배속 ( 배속이 0.5이면 애니메이션 재생속도가 2배 )
-                animator.SetFloat(DashSpeedParameter, dashAnimation.length / dashTime);
-
-                DashLog.Log($"Attack target={targetTransform.name} dist={dist:F3} dashTime={dashTime:F3}");
-            }
-            else DashLog.Log($"Attack(no dash) target={targetTransform.name} dist={dist:F3}");
-        }
+            PrepareApproach();
 
 
         animator.SetTrigger(AttackParameter);
     }
 
+    // 타깃을 바라보고, 멀면 흡착 대시 속도·애니 속도 계산 (공격·스킬 공용)
+    // 반환: 대시가 필요한지
+    private bool PrepareApproach()
+    {
+        Vector3 dir = targetTransform.position - transform.position;
+        dir.y = 0;
+        transform.rotation = Quaternion.LookRotation(dir);
+
+        float dist = dir.magnitude; // 적과 나 사이의 거리
+        bool needDash = dist > dashThreshold;   // dashThresh 보다 길면 true
+        animator.SetBool(HasTargetParameter, needDash); // dash 애니메이션 
+
+        // 대시가 필요하면
+        if (needDash) 
+        {
+            // 실제로 이동할 거리 
+            float travel = dist - attackRange;
+            // 대시 시간 = 거리 / 임시 시간 
+            // 최소, 최대 설정 
+            float dashTime = Mathf.Clamp(travel / dashAverageSpeed, dashMaxSpeed, dashMinSpeed);
+
+            // 스냅 속도 = 거리 / 시간 
+            snapSpeed = travel / dashTime;
+
+            // 애니메이션 배속 ( 배속이 0.5이면 애니메이션 재생속도가 2배 )
+            animator.SetFloat(DashSpeedParameter, dashAnimation.length / dashTime);
+
+            DashLog.Log($"Attack target={targetTransform.name} dist={dist:F3} dashTime={dashTime:F3}");
+        }
+        else DashLog.Log($"Attack(no dash) target={targetTransform.name} dist={dist:F3}");
+
+        return needDash;
+    }
+
     public void DoCombo() 
     {
+        // 스킬로 캔슬된 뒤에는 콤보로 끼어들지 않음
+        if (playerState == PlayerState.Skill) return;
+
         // AttackState에서 실행, 
         // 입력이 들어왔으면 Attack
         // 아니면 움직임 상태로 
@@ -241,6 +271,7 @@ public class MikuCharacter : MonoBehaviour
     {
         // Dogde에서 Idle로 전환할 수 있도록 막음 
         if (playerState == PlayerState.Dodging) return; 
+        currentSkill = null;
 
         playerState = PlayerState.Locomotion;
 
@@ -304,13 +335,120 @@ public class MikuCharacter : MonoBehaviour
             // 닷지 하고있거나 컷씬이 아닐 때
             // Attack과 Dash에서는 닷지 가능
             if (playerState != PlayerState.Dodging
-                && playerState != PlayerState.Cutscene) 
+                && playerState != PlayerState.Cutscene
+                && playerState != PlayerState.Skill)
             {
                 StartDodge(CheckPerfectDodge());
             }
         }
 
+        // 스킬 (1, 2, 3)
+        if (kb.digit1Key.wasPressedThisFrame) TryUseSkill(0);
+        if (kb.digit2Key.wasPressedThisFrame) TryUseSkill(1);
+        if (kb.digit3Key.wasPressedThisFrame) TryUseSkill(2);
+
     }
+
+    #region Skill
+    // 스킬을 쓸 수 있는 상태인지 (reason: 막힌 이유, 로그용)
+    private bool CanUseSkill(out string reason)
+    {
+        switch (playerState)
+        {
+            case PlayerState.Locomotion:
+                reason = null;
+                return true;
+
+            // 일반 회피는 캔슬 가능, 퍼펙트 회피는 불가
+            case PlayerState.Dodging:
+                reason = isPerfectDodge ? "perfectDodge" : null;
+                return !isPerfectDodge;
+
+            // 콤보 공격 애니 중은 불가, 콤보 사이 접근 대시 중은 가능
+            case PlayerState.Attacking:
+                reason = isApproaching ? null : "attackAnim";
+                return isApproaching;
+
+            // Skill, Cutscene
+            default:
+                reason = playerState.ToString();
+                return false;
+        }
+    }
+
+    private void TryUseSkill(int index)
+    {
+        ISkill skill = skills[index];
+
+        // 평소 / 일반 회피 중 / 콤보 사이 접근 대시 중에만 사용 가능
+        if (!CanUseSkill(out string reason))
+        {
+            DashLog.Log($"SkillBlocked skill={skill.Name} reason={reason}");
+            return;
+        }
+
+        if (!skill.IsReady)
+        {
+            DashLog.Log($"SkillBlocked skill={skill.Name} reason=cooldown remain={skill.CooldownRemain:F2}");
+            return;
+        }
+
+        PlayerState from = playerState;
+
+        // 일반 회피를 캔슬 -> 상태가 Skill로 바뀌어 TickDodge가 더 이상 안 불림 (이동은 여기서 멈춤)
+        if (from == PlayerState.Dodging)
+            DashLog.Log($"DodgeCancel elapsed={dodgeElapsed:F3}");
+        playerState = PlayerState.Skill;
+        currentSkill = skill;
+
+        // 기본 공격을 캔슬하고 들어온 경우 콤보 입력 정리
+        comboQueue = false;
+        isWindowOpen = false;
+        isPlayingAttack = false;
+
+        skill.Begin();
+
+        // 흡착: 타깃이 dashThreshold보다 멀면 Dash 상태를 거쳐 스킬로
+        // (Dash 상태의 DashEnd 전환이 SkillIndex로 분기)
+        bool dash = false;
+        if (skill.UseDash)
+        {
+            targetTransform = FindTarget();
+            if (targetTransform != null) dash = PrepareApproach();
+        }
+
+        bool reuseDash = false;
+        if (dash)
+        {
+            animator.SetInteger(SkillIndexParameter, index + 1);
+
+            // 이미 첫 Dash를 재생 중이면 그대로 두고 DashEnd 분기만 바꿈
+            // (자기 자신으로 CrossFade하면 처음부터 다시 시작되는지 보장이 없음)
+            reuseDash = animator.GetCurrentAnimatorStateInfo(0).IsName(DashStateName)
+                        && !animator.IsInTransition(0);
+            if (!reuseDash) animator.CrossFadeInFixedTime(DashStateName, 0.05f);
+        }
+        else
+        {
+            animator.CrossFadeInFixedTime(skill.StateName, 0.1f);
+        }
+
+        DashLog.Log($"SkillStart skill={skill.Name} idx={index + 1} dash={dash} reuseDash={reuseDash} from={from}");
+    }
+
+    // SkillState.OnStateEnter: 스킬 상태에 들어왔으면 흡착 분기 값은 원래대로
+    // (안 되돌리면 다음 기본 공격 흡착이 스킬로 빠짐)
+    public void OnSkillStateEnter()
+    {
+        animator.SetInteger(SkillIndexParameter, 0);
+    }
+
+    // SkillState.OnStateUpdate: 애니메이션 진행도로 스킬 진행
+    public void TickSkill(float t)
+    {
+        currentSkill?.Tick(t);
+    }
+    #endregion
 
     private void StartDodge(bool perfect = false)
     {
