@@ -95,7 +95,7 @@ public class MikuCharacter : MonoBehaviour
     // 퍼펙트 회피 슬로우 (x: 회피 진행도 0~1, y: timeScale)
     [SerializeField] private AnimationCurve perfectDodgeTimeCurve;
     // 퍼펙트 회피 판정 반경 (이 안에 창이 열린 적이 있으면 퍼펙트)
-    [SerializeField] private float perfectDodgeRadius = 1.5f;
+    [SerializeField] private float perfectDodgeRadius;
     private bool isPerfectDodge;    // 이번 회피가 퍼펙트인지
 
     // 퍼펙트 회피 화면 어두워짐 (x: 회피 진행도 0~1, y: Volume weight)
@@ -104,8 +104,8 @@ public class MikuCharacter : MonoBehaviour
 
     // 퍼펙트 회피 잔상
     [SerializeField] private Material afterImageMaterial;
-    [SerializeField] private float afterImageInterval = 0.1f;   // 진행도 간격
-    [SerializeField] private float afterImageLifeTime = 0.3f;   // 잔상 유지 시간 (게임 시간)
+    [SerializeField] private float afterImageInterval;   // 진행도 간격
+    [SerializeField] private float afterImageLifeTime;   // 잔상 유지 시간 (게임 시간)
     private SkinnedMeshRenderer[] afterImageRenderers;
     private float nextAfterImageT;  // 다음 잔상을 찍을 진행도
 
@@ -122,7 +122,7 @@ public class MikuCharacter : MonoBehaviour
     private ISkill currentSkill;    // 지금 사용 중인 스킬 (없으면 null)
     private bool isApproaching;     // 콤보 사이 접근 대시 중인지 (DashApproach / AttackState가 관리)
     public bool IsApproaching { get => isApproaching; set => isApproaching = value; }
-    [SerializeField, Range(0f, 0.5f)] private float dashCancelGrace = 0.2f;   // DashEnd 뒤에도 스킬 캔슬을 받아 주는 시간
+    [SerializeField, Range(0f, 0.5f)] private float dashCancelGrace;   // DashEnd 뒤에도 스킬 캔슬을 받아 주는 시간
     private float dashEndTime = float.NegativeInfinity;                       // 마지막 DashEnd 시간
     public LayerMask EnemyLayer => enemyLayer;
     #endregion

@@ -529,8 +529,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.035695698, y: -0.9636295, z: -0.168007, w: 0.20473805}
-  m_LocalPosition: {x: 0.274, y: 0.07, z: 0.894}
+  m_LocalRotation: {x: 0, y: 0.9923212, z: -0.12368808, w: 0}
+  m_LocalPosition: {x: 0, y: 0.757, z: 0.949}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -626,7 +626,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5890831985990576289, guid: f05ba8a530a66e4489add5b33985e813, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.786
+      value: 0.627
       objectReference: {fileID: 0}
     - target: {fileID: 5890831985990576289, guid: f05ba8a530a66e4489add5b33985e813, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3639,13 +3639,13 @@ MonoBehaviour:
   mainCamera: {fileID: 330585543}
   introDirector: {fileID: 1405915883}
   defaultCam: {fileID: 19650843}
-  searchRadius: 2
+  searchRadius: 3
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
   targetTransform: {fileID: 0}
   attackRange: 0.5
-  dashThreshold: 0.8
+  dashThreshold: 0.9
   dashAnimation: {fileID: -203655887218126122, guid: 264ec932dda8d394ca73fead0017637d, type: 3}
   weapon: {fileID: 492042777}
   isWindowOpen: 0
@@ -3734,6 +3734,7 @@ MonoBehaviour:
   afterImageMaterial: {fileID: 2100000, guid: daecc2dc17c40ec439f57a42e30df3f7, type: 2}
   afterImageInterval: 0.1
   afterImageLifeTime: 0.3
+  dashCancelGrace: 0.2
 --- !u!143 &5260423539397015686
 CharacterController:
   m_ObjectHideFlags: 0
@@ -4252,11 +4253,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4859536011752900609, guid: f05ba8a530a66e4489add5b33985e813, type: 3}
       propertyPath: hp
-      value: 1000
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5890831985990576289, guid: f05ba8a530a66e4489add5b33985e813, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -0.432
       objectReference: {fileID: 0}
     - target: {fileID: 5890831985990576289, guid: f05ba8a530a66e4489add5b33985e813, type: 3}
       propertyPath: m_LocalPosition.y
