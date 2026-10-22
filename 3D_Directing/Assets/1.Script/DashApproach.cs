@@ -39,7 +39,7 @@ public class DashApproach : StateMachineBehaviour
                 DashLog.Log($"DashEnd reason={(ready ? "ready" : "timeout")} elapsed={elapsed:F3} remain={character.RemainDistance():F3}");
 
                 animator.SetTrigger("DashEnd");
-                character.IsApproaching = false;    // 여기부터는 공격 애니로 넘어가는 중 -> 스킬 캔슬 불가
+                character.OnDashEnd();    // 접근 끝 -> 여기부터는 유예 시간 동안만 스킬 캔슬 가능
                 dashEnded = true;
             }
         }

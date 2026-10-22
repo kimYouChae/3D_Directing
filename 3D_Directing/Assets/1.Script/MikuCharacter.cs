@@ -122,6 +122,8 @@ public class MikuCharacter : MonoBehaviour
     private ISkill currentSkill;    // 지금 사용 중인 스킬 (없으면 null)
     private bool isApproaching;     // 콤보 사이 접근 대시 중인지 (DashApproach / AttackState가 관리)
     public bool IsApproaching { get => isApproaching; set => isApproaching = value; }
+    [SerializeField, Range(0f, 0.5f)] private float dashCancelGrace = 0.2f;   // DashEnd 뒤에도 스킬 캔슬을 받아 주는 시간
+    private float dashEndTime = float.NegativeInfinity;                       // 마지막 DashEnd 시간
     public LayerMask EnemyLayer => enemyLayer;
     #endregion
 
@@ -172,6 +174,7 @@ public class MikuCharacter : MonoBehaviour
     {
         animator.SetBool(HasTargetParameter , false);
         isApproaching = false;
+        dashEndTime = float.NegativeInfinity;   // 새 공격 시작 -> 이전 대시의 유예는 끝
 
         targetTransform = FindTarget();
         if(targetTransform == null)
@@ -342,6 +345,11 @@ public class MikuCharacter : MonoBehaviour
             }
         }
 
+        // 입력 감지 로그 (스킬 판정과 별개로, 키가 눌린 프레임 그대로)
+        if (kb.digit1Key.wasPressedThisFrame) DashLog.Log($"RawInput key=1 state={playerState} approaching={isApproaching}");
+        if (kb.digit2Key.wasPressedThisFrame) DashLog.Log($"RawInput key=2 state={playerState} approaching={isApproaching}");
+        if (kb.digit3Key.wasPressedThisFrame) DashLog.Log($"RawInput key=3 state={playerState} approaching={isApproaching}");
+
         // 스킬 (1, 2, 3)
         if (kb.digit1Key.wasPressedThisFrame) TryUseSkill(0);
         if (kb.digit2Key.wasPressedThisFrame) TryUseSkill(1);
@@ -366,8 +374,10 @@ public class MikuCharacter : MonoBehaviour
 
             // 콤보 공격 애니 중은 불가, 콤보 사이 접근 대시 중은 가능
             case PlayerState.Attacking:
-                reason = isApproaching ? null : "attackAnim";
-                return isApproaching;
+                // 대시 중이거나, 대시가 끝난 직후(유예 시간 안)면 캔슬 가능
+                bool inGrace = Time.time - dashEndTime <= dashCancelGrace;
+                reason = (isApproaching || inGrace) ? null : "attackAnim";
+                return isApproaching || inGrace;
 
             // Skill, Cutscene
             default:
@@ -398,6 +408,10 @@ public class MikuCharacter : MonoBehaviour
         // 일반 회피를 캔슬 -> 상태가 Skill로 바뀌어 TickDodge가 더 이상 안 불림 (이동은 여기서 멈춤)
         if (from == PlayerState.Dodging)
             DashLog.Log($"DodgeCancel elapsed={dodgeElapsed:F3}");
+
+        // 대시가 끝난 뒤 유예 시간 안에 들어온 캔슬 (유예 값 조절용 로그)
+        if (from == PlayerState.Attacking && !isApproaching)
+            DashLog.Log($"DashGraceCancel since={Time.time - dashEndTime:F3}");
         playerState = PlayerState.Skill;
         currentSkill = skill;
 
@@ -434,6 +448,13 @@ public class MikuCharacter : MonoBehaviour
         }
 
         DashLog.Log($"SkillStart skill={skill.Name} idx={index + 1} dash={dash} reuseDash={reuseDash} from={from}");
+    }
+
+    // DashApproach가 DashEnd를 켤 때: 접근 대시 끝 + 유예 시간 시작
+    public void OnDashEnd()
+    {
+        isApproaching = false;
+        dashEndTime = Time.time;
     }
 
     // SkillState.OnStateEnter: 스킬 상태에 들어왔으면 흡착 분기 값은 원래대로
