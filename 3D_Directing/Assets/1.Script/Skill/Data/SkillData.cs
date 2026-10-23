@@ -12,6 +12,8 @@ public abstract class SkillData : ScriptableObject
     [SerializeField] private float range;           // 판정 범위
     [SerializeField] private float damage;          // 데미지
     [SerializeField] private bool useDash;          // 흡착(Dash) 사용 여부
+    [SerializeField] private float hitStopDuration;  // 맞았을 때 히트스톱 시간 (실제 시간, 0이면 없음)
+    [SerializeField] private float cameraShakeForce; // 맞았을 때 카메라 셰이크 세기 (0이면 없음)
 
     public string SkillName => skillName;
     public string StateName => stateName;
@@ -19,6 +21,8 @@ public abstract class SkillData : ScriptableObject
     public float Range => range;
     public float Damage => damage;
     public bool UseDash => useDash;
+    public float HitStopDuration => hitStopDuration;
+    public float CameraShakeForce => cameraShakeForce;
 
     // 이 데이터로 실행용 스킬 객체를 만든다 (행동은 스킬마다 다른 클래스)
     public abstract ISkill CreateSkill(MikuCharacter owner);

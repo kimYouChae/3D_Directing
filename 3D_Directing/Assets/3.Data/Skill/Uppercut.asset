@@ -18,6 +18,8 @@ MonoBehaviour:
   range: 2
   damage: 1
   useDash: 1
+  hitStopDuration: 0.5
+  cameraShakeForce: 0.2
   hitStart: 0.2
   hitEnd: 0.8
   launchHeight: 3

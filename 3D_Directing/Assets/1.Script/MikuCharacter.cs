@@ -90,6 +90,19 @@ public class MikuCharacter : MonoBehaviour
     public bool IsPlayingAttack { get => isPlayingAttack; set => isPlayingAttack = value; }
     #endregion
 
+    #region HitStop
+    [Header("===HitStop===")]
+    [SerializeField] private float hitStopDuration;    // 기본 공격 멈춤 시간 (실제 시간, 스킬은 SO)
+    [SerializeField] private float hitStopTimeScale;   // 멈춘 동안 timeScale (공격·스킬 공통, 0이면 완전 정지)
+    private bool isHitStop;
+    private float hitStopEndTime;   // 끝나는 시각 (unscaledTime)
+    #endregion
+
+    #region CameraShake
+    [Header("===CameraShake===")]
+    [SerializeField] private CinemachineImpulseSource hitImpulse;   // 스킬 타격 셰이크 (모양은 Inspector, 세기는 스킬 SO)
+    #endregion
+
     #region Dodge
     [Header("===Dodge===")]
     [SerializeField] AnimationClip dodgeAnimation;
@@ -140,6 +153,9 @@ public class MikuCharacter : MonoBehaviour
         animator = GetComponent<Animator>();    
         afterImageRenderers = GetComponentsInChildren<SkinnedMeshRenderer>();
 
+        // 셰이크는 실제 시간으로 재생 -> 히트스톱(timeScale↓) 중에도 흔들림
+        CinemachineImpulseManager.Instance.IgnoreTimeScale = true;
+
         // 스킬 데이터(SO)로 실행용 스킬 생성 (실행 중 상태는 스킬 객체가 가짐)
         skills = new ISkill[skillDatas.Length];
         for (int i = 0; i < skillDatas.Length; i++)
@@ -148,6 +164,7 @@ public class MikuCharacter : MonoBehaviour
 
     private void Update()
     {
+        TickHitStop();
         ReadInput();
 
         switch (playerState) 
@@ -259,6 +276,8 @@ public class MikuCharacter : MonoBehaviour
         Collider[] hits = Physics.OverlapCapsule(p1, p2, weapon.Radius, enemyLayer);
         Debug.DrawLine(p1, p2, Color.red, 1f);
 
+        bool anyHit = false;   // 이번 프레임에 새로 맞은 적이 있는지 (히트스톱용)
+
         foreach (var hit in hits)
         {
             Enemy enemy = hit.GetComponentInParent<Enemy>();
@@ -269,7 +288,11 @@ public class MikuCharacter : MonoBehaviour
 
             //##TODO : 데미지 하드코딩 수정 필요 
             enemy.TakeDamage(30);
+            anyHit = true;
         }
+
+        // 여러 명이 맞아도 한 번만
+        if (anyHit) StartHitStop(hitStopDuration);
     }
 
     public void IdleState() 
@@ -477,6 +500,9 @@ public class MikuCharacter : MonoBehaviour
 
     private void StartDodge(bool perfect = false)
     {
+        // 히트스톱 중 회피 캔슬 -> 먼저 timeScale 복구 (퍼펙트 슬로우를 덮어쓰지 않게)
+        EndHitStop();
+
         PlayerState from = playerState;
         playerState = PlayerState.Dodging;
         dodgeElapsed = 0;
@@ -551,6 +577,46 @@ public class MikuCharacter : MonoBehaviour
         }
         return false;
     }
+
+    #region HitStop
+    // 히트스톱: 맞은 순간 timeScale을 낮췄다가 실제 시간으로 duration 뒤 복구
+    // 게임 시간으로 재면 느려진 동안 시간도 같이 멈춰서 안 풀림 -> unscaledTime
+    public void StartHitStop(float duration)
+    {
+        // 퍼펙트 회피 슬로우가 timeScale을 쓰는 중이면 건드리지 않음
+        if (isPerfectDodge) return;
+
+        isHitStop = true;
+        hitStopEndTime = Time.unscaledTime + duration;
+        Time.timeScale = hitStopTimeScale;
+
+        DashLog.Log($"HitStopStart duration={duration} real={Time.unscaledTime:F3}");
+    }
+
+    private void TickHitStop()
+    {
+        if (isHitStop && Time.unscaledTime >= hitStopEndTime) EndHitStop();
+    }
+
+    private void EndHitStop()
+    {
+        if (!isHitStop) return;
+
+        isHitStop = false;
+        Time.timeScale = 1f;
+
+        DashLog.Log($"HitStopEnd real={Time.unscaledTime:F3}");
+    }
+    #endregion
+
+    #region CameraShake
+    // 카메라 셰이크: Impulse Source가 신호를 내면 CM_Default의 Impulse Listener가 흔듦
+    public void ShakeCamera(float force)
+    {
+        hitImpulse.GenerateImpulseWithForce(force);
+        DashLog.Log($"CameraShake force={force} real={Time.unscaledTime:F3}");
+    }
+    #endregion
 
     #region PerfectDodgeFX
     // 퍼펙트 회피 연출 (슬로우 + 화면 어두워짐 + 잔상)

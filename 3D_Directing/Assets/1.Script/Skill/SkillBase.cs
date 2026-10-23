@@ -15,6 +15,9 @@ public abstract class SkillBase : ISkill
     // 마지막 사용 시간 (NegativeInfinity -> 처음엔 바로 사용 가능)
     private float lastUseTime = float.NegativeInfinity;
 
+    // 이번 사용에서 첫 타격 연출(히트스톱·셰이크)을 했는지 (한 번 사용에 한 번만)
+    private bool hasHitFeedback;
+
     public string Name => data.SkillName;
     public string StateName => data.StateName;
     public bool UseDash => data.UseDash;
@@ -34,6 +37,7 @@ public abstract class SkillBase : ISkill
     {
         lastUseTime = Time.time;
         hitEnemies.Clear();
+        hasHitFeedback = false;
         OnBegin();
     }
 
@@ -62,6 +66,8 @@ public abstract class SkillBase : ISkill
     {
         if (t < start || t > end) return;
 
+        bool anyHit = false;   // 이번 프레임에 새로 맞은 적이 있는지 (히트스톱·셰이크용)
+
         foreach (Enemy enemy in FindEnemies(owner.transform.position, radius))
         {
             // 이미 맞은 적이면 pass
@@ -69,6 +75,15 @@ public abstract class SkillBase : ISkill
 
             DashLog.Log($"SkillHit skill={Name} enemy={enemy.name} t={t:F3}");
             onHit(enemy);
+            anyHit = true;
+        }
+
+        // 처음 맞힌 순간 한 번만 (값이 0이면 그 연출은 없는 스킬)
+        if (anyHit && !hasHitFeedback)
+        {
+            if (data.HitStopDuration > 0f) owner.StartHitStop(data.HitStopDuration);
+            if (data.CameraShakeForce > 0f) owner.ShakeCamera(data.CameraShakeForce);
+            hasHitFeedback = true;
         }
     }
 }
