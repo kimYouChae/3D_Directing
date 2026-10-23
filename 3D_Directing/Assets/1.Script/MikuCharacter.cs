@@ -59,11 +59,16 @@ public class MikuCharacter : MonoBehaviour
     #endregion
 
     #region Dash
+    [Header("===Dash===")]
     private float dashAverageSpeed = 3f; // 평균 대시 속도 
     private float dashMaxSpeed = 0.3f; // 최소 대시 시간 (> 들어가는 전환 + 나가는 전환)
     private float dashMinSpeed = 0.6f; // 최대 대시 시간 
     private float dashToAttackAnimationBlendTime = 0.15f;
 
+    private bool isApproaching;     // 콤보 사이 접근 대시 중인지 (DashApproach / AttackState가 관리)
+    public bool IsApproaching { get => isApproaching; set => isApproaching = value; }
+    [SerializeField, Range(0f, 0.5f)] private float dashCancelGrace;   // DashEnd 뒤에도 스킬 캔슬을 받아 주는 시간
+    private float dashEndTime = float.NegativeInfinity;                       // 마지막 DashEnd 시간
     #endregion
 
 
@@ -118,12 +123,12 @@ public class MikuCharacter : MonoBehaviour
     #endregion
 
     #region Skill
+    [Header("===Skill===")]
+    // 스킬 데이터(SO), 1·2·3 키 순서
+    // 순서 주의: SkillIndex = 순서 + 1 -> Animator의 Dash -> Skill2/3 전이 조건과 맞물림 (1: 마법, 2: 어퍼컷, 3: 내려찍기)
+    [SerializeField] private SkillData[] skillDatas;
     private ISkill[] skills;        // 1, 2, 3 키 순서
     private ISkill currentSkill;    // 지금 사용 중인 스킬 (없으면 null)
-    private bool isApproaching;     // 콤보 사이 접근 대시 중인지 (DashApproach / AttackState가 관리)
-    public bool IsApproaching { get => isApproaching; set => isApproaching = value; }
-    [SerializeField, Range(0f, 0.5f)] private float dashCancelGrace;   // DashEnd 뒤에도 스킬 캔슬을 받아 주는 시간
-    private float dashEndTime = float.NegativeInfinity;                       // 마지막 DashEnd 시간
     public LayerMask EnemyLayer => enemyLayer;
     #endregion
 
@@ -135,13 +140,10 @@ public class MikuCharacter : MonoBehaviour
         animator = GetComponent<Animator>();    
         afterImageRenderers = GetComponentsInChildren<SkinnedMeshRenderer>();
 
-        // 데이터는 지금은 각 스킬 생성자에 하드코딩
-        skills = new ISkill[]
-        {
-            new MagicSkill(this),
-            new UppercutSkill(this),
-            new SlamSkill(this),
-        };
+        // 스킬 데이터(SO)로 실행용 스킬 생성 (실행 중 상태는 스킬 객체가 가짐)
+        skills = new ISkill[skillDatas.Length];
+        for (int i = 0; i < skillDatas.Length; i++)
+            skills[i] = skillDatas[i].CreateSkill(this);
     }
 
     private void Update()
@@ -388,6 +390,8 @@ public class MikuCharacter : MonoBehaviour
 
     private void TryUseSkill(int index)
     {
+        // 키는 3개인데 데이터가 덜 들어간 경우
+        if (index >= skills.Length) return;
         ISkill skill = skills[index];
 
         // 평소 / 일반 회피 중 / 콤보 사이 접근 대시 중에만 사용 가능

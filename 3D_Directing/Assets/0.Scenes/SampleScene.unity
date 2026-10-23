@@ -3734,6 +3734,10 @@ MonoBehaviour:
   afterImageMaterial: {fileID: 2100000, guid: daecc2dc17c40ec439f57a42e30df3f7, type: 2}
   afterImageInterval: 0.1
   afterImageLifeTime: 0.3
+  skillDatas:
+  - {fileID: 11400000, guid: 9e5a4b7c1f6d8e0a3c2b5f4e7a9d1c65, type: 2}
+  - {fileID: 11400000, guid: 0f6b5c8d2a7e9f1b4d3c6a5f8b0e2d76, type: 2}
+  - {fileID: 11400000, guid: 1a7c6d9e3b8f0a2c5e4d7b6a9c1f3e87, type: 2}
   dashCancelGrace: 0.2
 --- !u!143 &5260423539397015686
 CharacterController:

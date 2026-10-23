@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // 스킬 공통 (쿨타임, 범위 안 적 찾기, 중복 타격 방지)
-// 데이터는 지금은 생성자로 하드코딩 -> 나중에 ScriptableObject로 교체
+// 수치는 SkillData(SO)에서 읽고, 실행 중 상태(쿨타임 시각, 맞은 적)는 여기서 가진다
 public abstract class SkillBase : ISkill
 {
     protected readonly MikuCharacter owner;
-    protected readonly float cooldown;  // 쿨타임
-    protected readonly float range;     // 판정 범위
-    protected readonly float damage;    // 데미지
+    private readonly SkillData data;
 
     // 이번 사용에서 이미 맞은 적 (중복 타격 방지)
     protected readonly HashSet<Enemy> hitEnemies = new HashSet<Enemy>();
@@ -17,22 +15,19 @@ public abstract class SkillBase : ISkill
     // 마지막 사용 시간 (NegativeInfinity -> 처음엔 바로 사용 가능)
     private float lastUseTime = float.NegativeInfinity;
 
-    public string Name { get; }
-    public string StateName { get; }
-    public bool UseDash { get; }
-    public bool IsReady => Time.time >= lastUseTime + cooldown;
-    public float CooldownRemain => Mathf.Max(0f, lastUseTime + cooldown - Time.time);
+    public string Name => data.SkillName;
+    public string StateName => data.StateName;
+    public bool UseDash => data.UseDash;
+    public bool IsReady => Time.time >= lastUseTime + data.Cooldown;
+    public float CooldownRemain => Mathf.Max(0f, lastUseTime + data.Cooldown - Time.time);
 
-    protected SkillBase(MikuCharacter owner, string name, string stateName,
-                        float cooldown, float range, float damage, bool useDash)
+    protected float Range => data.Range;     // 판정 범위
+    protected float Damage => data.Damage;   // 데미지
+
+    protected SkillBase(MikuCharacter owner, SkillData data)
     {
         this.owner = owner;
-        Name = name;
-        StateName = stateName;
-        this.cooldown = cooldown;
-        this.range = range;
-        this.damage = damage;
-        UseDash = useDash;
+        this.data = data;
     }
 
     public void Begin()
