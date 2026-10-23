@@ -15,6 +15,8 @@ public abstract class SkillData : ScriptableObject
     [SerializeField] private float hitStopDuration;  // 맞았을 때 히트스톱 시간 (실제 시간, 0이면 없음)
     [SerializeField] private float hitStopTimeScale; // 히트스톱 동안 timeScale (0이면 완전 정지)
     [SerializeField] private float cameraShakeForce; // 맞았을 때 카메라 셰이크 세기 (0이면 없음)
+    [SerializeField] private EffectSpawn castEffect;  // 스킬 애니 중 캐릭터 기준 이펙트 (prefab 비우면 없음)
+    [SerializeField, Range(0f, 1f)] private float castTiming; // 시작 이펙트 생성 진행도 (0이면 애니 시작 즉시)
 
     public string SkillName => skillName;
     public string StateName => stateName;
@@ -25,6 +27,8 @@ public abstract class SkillData : ScriptableObject
     public float HitStopDuration => hitStopDuration;
     public float HitStopTimeScale => hitStopTimeScale;
     public float CameraShakeForce => cameraShakeForce;
+    public EffectSpawn CastEffect => castEffect;
+    public float CastTiming => castTiming;
 
     // 이 데이터로 실행용 스킬 객체를 만든다 (행동은 스킬마다 다른 클래스)
     public abstract ISkill CreateSkill(MikuCharacter owner);

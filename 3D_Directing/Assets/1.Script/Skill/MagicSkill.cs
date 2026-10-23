@@ -17,13 +17,14 @@ public class MagicSkill : SkillBase
         spawned = false;
     }
 
-    public override void Tick(float t)
+    protected override void OnTick(float t)
     {
         if (spawned || t < data.SpawnTiming) return;
         spawned = true;
 
         // 폭발 반경 = 판정 범위
         foreach (Enemy enemy in FindEnemies(owner.transform.position, data.CastRange))
-            MagicCircle.Spawn(enemy.FeetPosition, Range, data.ExplodeDelay, Damage, owner.EnemyLayer);
+            MagicCircle.Spawn(enemy.FeetPosition, Range, data.ExplodeDelay, Damage, owner.EnemyLayer,
+                              data.CircleEffect, data.HitEffect);
     }
 }

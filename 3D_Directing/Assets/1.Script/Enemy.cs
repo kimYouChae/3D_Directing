@@ -33,6 +33,8 @@ public class Enemy : MonoBehaviour
 
     // 발밑 위치 (마법 원 생성용)
     public Vector3 FeetPosition => new Vector3(transform.position.x, bodyCollider.bounds.min.y, transform.position.z);
+    // 몸 중심 (타격 이펙트 생성용)
+    public Vector3 BodyPosition => bodyCollider.bounds.center;
 
     // 반짝인 뒤 경과 시간 (로그용)
     public float TimeSinceFlash => Time.time - flashTime;

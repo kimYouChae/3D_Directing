@@ -18,6 +18,28 @@ MonoBehaviour:
   range: 0.4
   damage: 1
   useDash: 0
+  hitStopDuration: 0
+  hitStopTimeScale: 0
+  cameraShakeForce: 0
+  castEffect:
+    prefab: {fileID: 0}
+    offset: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0}
+    scale: 0
+    lifeTime: 0
+  castTiming: 0
   spawnTiming: 0.5
   castRange: 2
   explodeDelay: 1
+  circleEffect:
+    prefab: {fileID: 3744133877081091469, guid: a2a060732547fe64581bb0cb3c2bdf1d, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0}
+    scale: 0.5
+    lifeTime: 0
+  hitEffect:
+    prefab: {fileID: 2944396702758532163, guid: e190bf97c041e58448af6b043116cba0, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0}
+    scale: 1
+    lifeTime: 1

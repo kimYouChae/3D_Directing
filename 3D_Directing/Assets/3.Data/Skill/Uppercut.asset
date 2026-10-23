@@ -21,6 +21,13 @@ MonoBehaviour:
   hitStopDuration: 0.3
   hitStopTimeScale: 0.05
   cameraShakeForce: 0.2
+  castEffect:
+    prefab: {fileID: 8145502431507700120, guid: 000832214335ffd4782827d2a4510f4a, type: 3}
+    offset: {x: 0, y: 0.8, z: 0}
+    rotation: {x: -90, y: 0, z: 0}
+    scale: 0.7
+    lifeTime: 1
+  castTiming: 0.2
   hitStart: 0.2
   hitEnd: 0.8
   launchHeight: 3

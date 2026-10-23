@@ -10,7 +10,7 @@ public class UppercutSkill : SkillBase
         this.data = data;
     }
 
-    public override void Tick(float t)
+    protected override void OnTick(float t)
     {
         HitWindow(t, data.HitStart, data.HitEnd, Range, enemy =>
         {

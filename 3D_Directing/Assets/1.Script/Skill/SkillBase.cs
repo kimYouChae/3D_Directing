@@ -18,6 +18,9 @@ public abstract class SkillBase : ISkill
     // 이번 사용에서 첫 타격 연출(히트스톱·셰이크)을 했는지 (한 번 사용에 한 번만)
     private bool hasHitFeedback;
 
+    // 이번 사용에서 시작 이펙트를 이미 만들었는지
+    private bool castSpawned;
+
     public string Name => data.SkillName;
     public string StateName => data.StateName;
     public bool UseDash => data.UseDash;
@@ -38,13 +41,30 @@ public abstract class SkillBase : ISkill
         lastUseTime = Time.time;
         hitEnemies.Clear();
         hasHitFeedback = false;
+        castSpawned = false;
         OnBegin();
     }
 
     // 스킬별 초기화가 필요하면 재정의
     protected virtual void OnBegin() { }
 
-    public abstract void Tick(float t);
+    // 매 프레임 (SkillState -> MikuCharacter.TickSkill)
+    // 진행도가 castTiming에 처음 닿은 프레임 -> 시작 이펙트 (0이면 애니 시작 즉시)
+    // (Tick은 스킬 애니에서만 불림 -> 흡착 대시가 끝난 자리에서 생성됨)
+    public void Tick(float t)
+    {
+        if (!castSpawned && t >= data.CastTiming)
+        {
+            castSpawned = true;
+            if (data.CastEffect.Spawn(owner.transform.position, owner.transform.rotation) != null)
+                DashLog.Log($"CastEffect skill={Name} t={t:F3}");
+        }
+
+        OnTick(t);
+    }
+
+    // 스킬별 동작 (진행도 t)
+    protected abstract void OnTick(float t);
 
     // center 반경 안의 적 (콜라이더가 자식이어도 찾도록 GetComponentInParent)
     protected List<Enemy> FindEnemies(Vector3 center, float radius)

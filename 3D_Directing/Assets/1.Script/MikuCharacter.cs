@@ -91,7 +91,7 @@ public class MikuCharacter : MonoBehaviour
     #endregion
 
     #region HitFeedback
-    // 타격 연출(히트스톱·셰이크)은 같은 오브젝트의 HitFeedback 컴포넌트가 담당
+    // 타격 연출(히트스톱·셰이크·기본 공격 이펙트·궤적)은 같은 오브젝트의 HitFeedback 컴포넌트가 담당
     private HitFeedback hitFeedback;
     public HitFeedback HitFeedback => hitFeedback;
     #endregion
@@ -262,6 +262,9 @@ public class MikuCharacter : MonoBehaviour
 
     public void CheckHit(AttackStep stemp) 
     {
+        // 판정 중인 프레임 = 휘두르는 중 (무기 궤적용)
+        hitFeedback.MarkSwing();
+
         weapon.GetCapsule(out Vector3 p1, out Vector3 p2);
 
         // 캡슐(point1,2와 반지름)만큼 충돌 검사
