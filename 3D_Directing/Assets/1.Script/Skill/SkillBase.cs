@@ -81,8 +81,8 @@ public abstract class SkillBase : ISkill
         // 처음 맞힌 순간 한 번만 (값이 0이면 그 연출은 없는 스킬)
         if (anyHit && !hasHitFeedback)
         {
-            if (data.HitStopDuration > 0f) owner.StartHitStop(data.HitStopDuration);
-            if (data.CameraShakeForce > 0f) owner.ShakeCamera(data.CameraShakeForce);
+            if (data.HitStopDuration > 0f) owner.HitFeedback.StartHitStop(data.HitStopDuration, data.HitStopTimeScale);
+            if (data.CameraShakeForce > 0f) owner.HitFeedback.ShakeCamera(data.CameraShakeForce);
             hasHitFeedback = true;
         }
     }
