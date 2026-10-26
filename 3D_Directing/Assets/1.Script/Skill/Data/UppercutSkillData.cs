@@ -15,5 +15,8 @@ public class UppercutSkillData : SkillData
     public float LaunchHeight => launchHeight;
     public float LaunchDuration => launchDuration;
 
-    public override ISkill CreateSkill(MikuCharacter owner) => new UppercutSkill(owner, this);
+    public override ISkill CreateSkill(MikuCharacter owner) 
+    {
+        return new UppercutSkill(owner, this);
+    } 
 }
