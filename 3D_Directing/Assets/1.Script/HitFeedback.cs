@@ -58,7 +58,8 @@ public class HitFeedback : MonoBehaviour
     // 기본 공격이 이번 프레임에 새로 맞힌 적이 있을 때 (여러 명이어도 한 번)
     public void PlayAttackHit(AttackStep step, List<Enemy> newHits)
     {
-        StartHitStop(attackHitStopDuration, attackHitStopTimeScale);   // 기본 공격은 SO가 없어서 Inspector 값 사용
+        // 기본 공격은 SO가 없어서 Inspector 값 사용 (0이면 히트스톱 없음, 스킬과 같은 규칙)
+        if (attackHitStopDuration > 0f) StartHitStop(attackHitStopDuration, attackHitStopTimeScale);
 
         // 1타 1개, 2타 2개, 3타 3개
         int count = (int)step + 1;
