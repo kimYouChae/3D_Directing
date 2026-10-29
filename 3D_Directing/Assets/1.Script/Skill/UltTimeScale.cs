@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class UltTimeScale : MonoBehaviour
 {
-    [Range(0.05f, 1f)] public float scale = 1f;   // 0이면 Timeline이 멈추므로 하한 0.05
+    [Range(0.05f, 2f)] public float scale = 1f;   // 0이면 Timeline이 멈추므로 하한 0.05
 
     void Update()
     {
