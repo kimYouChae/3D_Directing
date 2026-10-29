@@ -29,6 +29,8 @@ public class HitFeedback : MonoBehaviour
 
     private MikuCharacter owner;
 
+    public bool IsHitStop => isHitStop;
+
     private void Start()
     {
         owner = GetComponent<MikuCharacter>();
