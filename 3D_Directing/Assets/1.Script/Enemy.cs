@@ -162,12 +162,6 @@ public class Enemy : MonoBehaviour
     private GameObject freezeFx;    // 얼음 이펙트 (적 자식, 해제 시 Destroy)
     public bool IsFrozen => Time.time < frozenUntil;
 
-    // 도트뎀: interval마다 damage, duration 동안
-    private float dotDamage;
-    private float dotInterval;
-    private float nextDotTime;
-    private float dotEndTime = float.NegativeInfinity;
-
     public void Freeze(float duration, EffectSpawn effect)
     {
         frozenUntil = Time.time + duration;
@@ -178,16 +172,6 @@ public class Enemy : MonoBehaviour
         DashLog.Log($"Freeze {name} duration={duration}");
     }
 
-    public void ApplyDot(float damage, float interval, float duration)
-    {
-        dotDamage = damage;
-        dotInterval = interval;
-        dotEndTime = Time.time + duration;
-        nextDotTime = Time.time + interval;
-
-        DashLog.Log($"ApplyDot {name} damage={damage} interval={interval} duration={duration}");
-    }
-
     private void TickStatus()
     {
         // 얼림 해제 -> 얼음 이펙트 제거
@@ -196,14 +180,6 @@ public class Enemy : MonoBehaviour
             Destroy(freezeFx);
             freezeFx = null;
             DashLog.Log($"FreezeEnd {name}");
-        }
-
-        // 도트 틱
-        if (Time.time < dotEndTime && Time.time >= nextDotTime)
-        {
-            nextDotTime += dotInterval;
-            DashLog.Log($"DotTick {name} damage={dotDamage}");
-            TakeDamage(dotDamage);
         }
     }
     #endregion
