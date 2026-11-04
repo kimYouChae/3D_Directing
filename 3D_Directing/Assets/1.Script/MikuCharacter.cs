@@ -190,7 +190,8 @@ public class MikuCharacter : MonoBehaviour
     }
     private void LateUpdate()
     {
-        movement.CameraTick(lookInput);
+        // 컷씬(궁극기) 중엔 마우스 회전 무시 -> 끝났을 때 원래 시점 그대로
+        movement.CameraTick(playerState == PlayerState.Cutscene ? Vector2.zero : lookInput);
     }
 
     private void Attack() 
@@ -431,6 +432,7 @@ public class MikuCharacter : MonoBehaviour
     private void OnUltEnd(PlayableDirector d)
     {
         d.stopped -= OnUltEnd;
+        jumpInput = false;   // 컷씬 중 눌린 Space가 남아 복귀 첫 프레임에 점프하지 않게
 
         currentSkill = null;
 
