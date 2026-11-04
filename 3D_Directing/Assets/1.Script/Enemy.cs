@@ -50,6 +50,13 @@ public class Enemy : MonoBehaviour
 
     private void Update()
     {
+        TickStatus();
+        if (IsFrozen)
+        {
+            nextFlashTime += Time.deltaTime;   // 얼어 있는 동안 깜빡임 타이머 정지 (풀린 뒤 몰아서 깜빡이는 것 방지)
+            return;                            // 넉백·띄우기·퍼펙트 창 정지
+        }
+
         TickLaunch();
         TickKnockback();
 
@@ -66,7 +73,7 @@ public class Enemy : MonoBehaviour
     private void Flash()
     {
         flashTime = Time.time;
-        DashLog.Log($"EnemyFlash {name}");
+        // DashLog.Log($"EnemyFlash {name}");
     }
 
     // 퍼펙트로 쓰였으면 창 닫기 (한 공격에 한 번)
@@ -145,6 +152,58 @@ public class Enemy : MonoBehaviour
         {
             isKnockback = false;
             DashLog.Log($"KnockbackEnd {name} pos={pos}");
+        }
+    }
+    #endregion
+
+    #region Status
+    // 얼림: 지속시간 동안 Update 반응(넉백·띄우기·깜빡임) 정지 + 얼음 이펙트
+    private float frozenUntil = float.NegativeInfinity;
+    private GameObject freezeFx;    // 얼음 이펙트 (적 자식, 해제 시 Destroy)
+    public bool IsFrozen => Time.time < frozenUntil;
+
+    // 도트뎀: interval마다 damage, duration 동안
+    private float dotDamage;
+    private float dotInterval;
+    private float nextDotTime;
+    private float dotEndTime = float.NegativeInfinity;
+
+    public void Freeze(float duration, EffectSpawn effect)
+    {
+        frozenUntil = Time.time + duration;
+
+        // 이미 얼어 있으면 시간만 갱신 (이펙트 중복 생성 방지)
+        if (freezeFx == null) freezeFx = effect.Spawn(BodyPosition, Quaternion.identity, transform);
+
+        DashLog.Log($"Freeze {name} duration={duration}");
+    }
+
+    public void ApplyDot(float damage, float interval, float duration)
+    {
+        dotDamage = damage;
+        dotInterval = interval;
+        dotEndTime = Time.time + duration;
+        nextDotTime = Time.time + interval;
+
+        DashLog.Log($"ApplyDot {name} damage={damage} interval={interval} duration={duration}");
+    }
+
+    private void TickStatus()
+    {
+        // 얼림 해제 -> 얼음 이펙트 제거
+        if (freezeFx != null && !IsFrozen)
+        {
+            Destroy(freezeFx);
+            freezeFx = null;
+            DashLog.Log($"FreezeEnd {name}");
+        }
+
+        // 도트 틱
+        if (Time.time < dotEndTime && Time.time >= nextDotTime)
+        {
+            nextDotTime += dotInterval;
+            DashLog.Log($"DotTick {name} damage={dotDamage}");
+            TakeDamage(dotDamage);
         }
     }
     #endregion

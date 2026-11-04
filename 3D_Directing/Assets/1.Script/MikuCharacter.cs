@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -30,8 +31,8 @@ public class MikuCharacter : MonoBehaviour
     private GameObject mainCamera;
 
     [Header("===Timeline===")]
-    [SerializeField]
-    private PlayableDirector introDirector;
+    [SerializeField] private PlayableDirector introDirector;
+    [SerializeField] private PlayableDirector ultDirector;
 
     [Header("===Cinemachine===")]
     [SerializeField] CinemachineCamera defaultCam;
@@ -139,6 +140,12 @@ public class MikuCharacter : MonoBehaviour
     public LayerMask EnemyLayer => enemyLayer;
     #endregion
 
+    #region
+    [Header("===Ult===")]
+    [SerializeField] private SkillData ultSkillData;
+    private ISkill ultSkill;
+    #endregion
+
     private void Start()
     {
         defaultCam.Priority = 10;
@@ -153,6 +160,9 @@ public class MikuCharacter : MonoBehaviour
         skills = new ISkill[skillDatas.Length];
         for (int i = 0; i < skillDatas.Length; i++)
             skills[i] = skillDatas[i].CreateSkill(this);
+
+        // 궁극기 데이터(SO)로 실행용 궁극기 스킬 생성
+        ultSkill = ultSkillData.CreateSkill(this);
     }
 
     private void Update()
@@ -173,6 +183,8 @@ public class MikuCharacter : MonoBehaviour
                 TickDodge();
                 break;
             case PlayerState.Cutscene:
+                // 궁극기: Animator 대신 Timeline 진행도(0~1)로 스킬 Tick (1·2·3 스킬의 SkillState.OnStateUpdate 역할)
+                TickSkill((float)(ultDirector.time / ultDirector.duration));
                 break;
         }
     }
@@ -293,7 +305,8 @@ public class MikuCharacter : MonoBehaviour
     public void IdleState() 
     {
         // Dogde에서 Idle로 전환할 수 있도록 막음 
-        if (playerState == PlayerState.Dodging) return; 
+        // Dodge 중, 컷씬(궁극기) 중에는 Animator의 Idle 진입이 상태를 덮어쓰지 않게
+        if (playerState == PlayerState.Dodging || playerState == PlayerState.Cutscene) return;
         currentSkill = null;
 
         playerState = PlayerState.Locomotion;
@@ -375,7 +388,59 @@ public class MikuCharacter : MonoBehaviour
         if (kb.digit2Key.wasPressedThisFrame) TryUseSkill(1);
         if (kb.digit3Key.wasPressedThisFrame) TryUseSkill(2);
 
+        // 궁극기
+        if (kb.gKey.wasPressedThisFrame) TryUseUlt();
+
     }
+
+    #region Ult
+    private void TryUseUlt() 
+    {
+        // 궁극기는 Locomotion에서만 (회피·돌진 중 사용 시 Animator가 Idle로 돌아오며 컷씬 상태를 덮어씀)
+        if (playerState != PlayerState.Locomotion)
+        {
+            DashLog.Log($"UltBlocked reason={playerState}");
+            return;
+        }
+
+        if (!ultSkill.IsReady)
+        {
+            DashLog.Log($"UltBlocked reason=cooldown remain={ultSkill.CooldownRemain:F2}");
+            return;
+        }
+
+        playerState = PlayerState.Cutscene; // 컷씬으로 세팅 
+        currentSkill = ultSkill;    // ult 컷씬 끝나고 쓸 ISkill 세팅 
+        ultSkill.Begin();   // 쿨타임 시작 + 이번 사용 상태 초기화
+
+        // 다른곳에서 쓰는 값 초기화 
+        comboQueue = false;
+        isWindowOpen = false;
+        isPlayingAttack = false;
+
+        // ult 타임라인이 끝나고 나서 실행할 메서드 바인드
+        ultDirector.stopped -= OnUltEnd;
+        ultDirector.stopped += OnUltEnd;
+
+        ultDirector.time = 0;
+        ultDirector.Play();
+
+        DashLog.Log($"UltStart duration={ultDirector.duration:F3}");
+    }
+
+    private void OnUltEnd(PlayableDirector d)
+    {
+        d.stopped -= OnUltEnd;
+
+        currentSkill = null;
+
+        Time.timeScale = 1f;               // 안전장치: UltTimeScale/히트스톱 잔여값 정리
+        playerState = PlayerState.Locomotion;
+
+        DashLog.Log("UltEnd");
+    }
+    #endregion
+
 
     #region Skill
     // 스킬을 쓸 수 있는 상태인지 (reason: 막힌 이유, 로그용)

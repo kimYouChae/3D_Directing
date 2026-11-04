@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efea1788d696c9547be1413c44e81444, type: 3}
+  m_Name: UltSkillData
+  m_EditorClassIdentifier: 
+  skillName: Ult
+  stateName: 
+  cooldown: 10
+  range: 20
+  damage: 10
+  useDash: 0
+  hitStopDuration: 0
+  hitStopTimeScale: 0
+  cameraShakeForce: 0
+  castEffect:
+    prefab: {fileID: 0}
+    offset: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0}
+    scale: 0
+    lifeTime: 0
+  castTiming: 0
+  spawnTiming: 0.9
+  fieldDuration: 5
+  tickInterval: 0.5
+  freezeDuration: 3
+  snowEffect:
+    prefab: {fileID: 161766660727748596, guid: 05ce920d629922a4eb4795ef7494ce5c, type: 3}
+    offset: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0}
+    scale: 0.5
+    lifeTime: 4
+  freezeEffect:
+    prefab: {fileID: 4932088507883938021, guid: 0e5709a7ddb77924090c112cf73bb98a, type: 3}
+    offset: {x: 0, y: -0.95, z: 0}
+    rotation: {x: 0, y: 0, z: 0}
+    scale: 1
+    lifeTime: 4
