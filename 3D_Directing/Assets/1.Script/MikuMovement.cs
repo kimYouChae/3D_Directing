@@ -93,6 +93,19 @@ public class MikuMovement : MonoBehaviour
 
     public void MoveRaw(Vector3 delta) => controller.Move(delta);
 
+    // 순간이동: CharacterController가 켜져 있으면 위치 변경이 무시될 수 있어 껐다 켬
+    public void Teleport(Vector3 position, Quaternion rotation)
+    {
+        controller.enabled = false;
+        controller.transform.SetPositionAndRotation(position, rotation);
+        controller.enabled = true;
+
+        // 카메라를 캐릭터 방향으로
+        cinemachineTargetYaw = rotation.eulerAngles.y;
+        cinemachineTargetPitch = 0f;
+        verticalVelocity = 0f;
+    }
+
     private void JumpAndGravity(bool jumpInput)
     {
         if (grounded)

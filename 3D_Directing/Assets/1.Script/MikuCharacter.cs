@@ -443,6 +443,41 @@ public class MikuCharacter : MonoBehaviour
     }
     #endregion
 
+    #region Flow
+    // FlowManager용: 지금 자유 이동 중인지 (공격·회피·스킬·컷신이 아님)
+    public bool IsLocomotion => playerState == PlayerState.Locomotion;
+
+    // 컷신 잠그기: 이동·입력·카메라 회전 막기 (해제는 ExitCutscene)
+    public void EnterCutscene()
+    {
+        playerState = PlayerState.Cutscene;
+        currentSkill = null;
+        comboQueue = false;
+        isWindowOpen = false;
+        isPlayingAttack = false;
+
+        DashLog.Log("EnterCutscene");
+    }
+
+    public void ExitCutscene()
+    {
+        jumpInput = false;   // 컷신 중 눌린 Space가 복귀 첫 프레임에 점프로 나가지 않게
+        playerState = PlayerState.Locomotion;
+
+        DashLog.Log("ExitCutscene");
+    }
+
+    // 순간이동: 위치·방향 + 돌진 타깃 초기화
+    public void Teleport(Transform point)
+    {
+        movement.Teleport(point.position, point.rotation);
+        targetTransform = null;
+        isApproaching = false;
+
+        DashLog.Log($"Teleport target={point.position} actual={transform.position}");
+    }
+    #endregion
+
 
     #region Skill
     // 스킬을 쓸 수 있는 상태인지 (reason: 막힌 이유, 로그용)
