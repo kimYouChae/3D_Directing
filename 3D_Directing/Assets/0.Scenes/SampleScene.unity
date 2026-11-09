@@ -2856,10 +2856,10 @@ MonoBehaviour:
         z: 0.07069104
       Rotation:
         value:
-          x: 0.5842456
+          x: 0.5842457
           y: 0.7853731
-          z: 0.11324985
-          w: -0.17035432
+          z: 0.11324984
+          w: -0.17035429
     - Position:
         x: -0.3538
         y: 0.521
@@ -3753,6 +3753,8 @@ MonoBehaviour:
   - director: {fileID: 1427649225}
     rig: {fileID: 0}
   - director: {fileID: 335669953}
+    rig: {fileID: 0}
+  - director: {fileID: 680925061}
     rig: {fileID: 0}
 --- !u!4 &1672110568
 Transform:
