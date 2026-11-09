@@ -1,8 +1,13 @@
+using System;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
     [SerializeField] private float hp = 30f;
+
+    // 죽을 때 한 번 (FieldManager가 alive에서 빼는 데 사용)
+    public event Action<Enemy> Died;
+    private bool isDead;   // 같은 프레임에 여러 번 맞아도 Died가 한 번만 불리게
 
     [Header("===Perfect Dodge (Test)===")]
     [SerializeField] private float flashInterval = 3f;    // 테스트용 반짝임 간격
@@ -191,7 +196,11 @@ public class Enemy : MonoBehaviour
         // Debug.Log($"{name} 피격 / 데미지 {damage} / 남은 HP {hp}");
 
         // hp가 0 이하가 되면 파괴
-        if (hp <= 0)
+        if (hp <= 0 && !isDead)
+        {
+            isDead = true;
+            Died?.Invoke(this);
             Destroy(gameObject);
+        }
     }
 }

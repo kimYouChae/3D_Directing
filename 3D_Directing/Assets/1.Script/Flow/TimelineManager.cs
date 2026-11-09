@@ -3,7 +3,18 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Playables;
 
-public enum CutsceneType { Opening, FieldArrive, Intro }   // 나머지 타입은 쓸 때 추가
+// 컷신 타입 (Inspector에 숫자로 저장되므로 새 타입은 맨 뒤에 추가)
+public enum CutsceneType
+{
+    Opening,                 // 오프닝
+    FieldArrive,             // 필드 도착 (Day별)
+    Intro,                   // 전투 시작 전 Intro
+    ExitComputer,            // Exit_Computer
+    EnterHead,               // Enter_Head
+    ExitDreamIntoComputer,   // Exit_Dream_Into_Computer
+    DayFlow,                 // DayFlow
+    Ending                   // Ending
+}
 public enum Day { First, Second, Third }
 
 // 컷신 찾기 -> 잠그기 -> (rig가 있으면) 미쿠 기준으로 정렬 -> 재생 -> 끝까지 대기
