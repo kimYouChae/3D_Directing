@@ -32,7 +32,7 @@ public class MikuCharacter : MonoBehaviour
 
     [Header("===Timeline===")]
     [SerializeField] private PlayableDirector introDirector;
-    [SerializeField] private PlayableDirector ultDirector;
+    private PlayableDirector ultDirector;   // TryUseUlt에서 TimelineManager.Prepare로 받음 (UltCameraRig 정렬 포함)
 
     [Header("===Cinemachine===")]
     [SerializeField] CinemachineCamera defaultCam;
@@ -184,7 +184,9 @@ public class MikuCharacter : MonoBehaviour
                 break;
             case PlayerState.Cutscene:
                 // 궁극기: Animator 대신 Timeline 진행도(0~1)로 스킬 Tick (1·2·3 스킬의 SkillState.OnStateUpdate 역할)
-                TickSkill((float)(ultDirector.time / ultDirector.duration));
+                // 다른 컷신(오프닝·Intro 등)에선 ultDirector가 없거나 currentSkill이 null -> 궁극기일 때만
+                if (currentSkill == ultSkill && ultDirector != null)
+                    TickSkill((float)(ultDirector.time / ultDirector.duration));
                 break;
         }
     }
@@ -407,6 +409,14 @@ public class MikuCharacter : MonoBehaviour
         if (!ultSkill.IsReady)
         {
             DashLog.Log($"UltBlocked reason=cooldown remain={ultSkill.CooldownRemain:F2}");
+            return;
+        }
+
+        // Director 찾기 + UltCameraRig를 미쿠 위치로 정렬 (재생·잠금·해제는 여기서 직접)
+        ultDirector = TimelineManager.Instance.Prepare(CutsceneType.Ult);
+        if (ultDirector == null)
+        {
+            DashLog.Log("UltBlocked reason=noDirector");
             return;
         }
 

@@ -530,6 +530,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 141298977}
+  - component: {fileID: 141298978}
   m_Layer: 0
   m_Name: UltCameraRig
   m_TagString: Untagged
@@ -558,6 +559,18 @@ Transform:
   - {fileID: 1194558435}
   m_Father: {fileID: 2120886120}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &141298978
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 141298976}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acdab38bd4582bf40b529c8e20cf8630, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &150337529
 GameObject:
   m_ObjectHideFlags: 0
@@ -648,7 +661,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 705f6ef51d1b206448ef8902787eb97e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hitFeedback: {fileID: 5260423539397015689}
   hitStopDuration: 0.2
   hitStopTimeScale: 0
   shakeForce: 1
@@ -912,8 +924,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -1, z: 0, w: 0}
-  m_LocalPosition: {x: -0.08, y: 0.07, z: 0.21}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: -0.448, y: 0.085, z: 0.45}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2116,7 +2128,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &954884921
 Transform:
   m_ObjectHideFlags: 0
@@ -2145,7 +2157,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scale: 1
-  hitFeedback: {fileID: 5260423539397015689}
 --- !u!95 &954884923
 Animator:
   serializedVersion: 7
@@ -2350,10 +2361,10 @@ MonoBehaviour:
         z: 0.07069104
       Rotation:
         value:
-          x: 0.5842457
+          x: 0.5842456
           y: 0.7853731
-          z: 0.11324984
-          w: -0.17035429
+          z: 0.11324985
+          w: -0.17035432
     - Position:
         x: -0.3538
         y: 0.521
@@ -3221,7 +3232,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cutscenes:
   - type: 0
-    day: 0
+    day: -1
     director: {fileID: 1335095564}
     rig: {fileID: 0}
   - type: 1
@@ -3237,9 +3248,13 @@ MonoBehaviour:
     director: {fileID: 1707631916}
     rig: {fileID: 0}
   - type: 2
-    day: 0
+    day: -1
     director: {fileID: 1405915883}
     rig: {fileID: 466530683}
+  - type: 8
+    day: -1
+    director: {fileID: 2096858395}
+    rig: {fileID: 141298978}
 --- !u!4 &1672110568
 Transform:
   m_ObjectHideFlags: 0
@@ -6308,7 +6323,6 @@ MonoBehaviour:
   animator: {fileID: 0}
   mainCamera: {fileID: 330585543}
   introDirector: {fileID: 1405915883}
-  ultDirector: {fileID: 2096858395}
   defaultCam: {fileID: 19650843}
   searchRadius: 3
   enemyLayer:
