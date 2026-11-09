@@ -5,8 +5,6 @@ using UnityEngine;
 // 순서, 현재 Day, 어떤 컷신을 언제 틀지, 언제 조작을 풀지
 public class FlowManager : Singleton<FlowManager>
 {
-    [SerializeField] private MikuCharacter miku;
-    [SerializeField] private TimelineManager timeline;
     [SerializeField] private FieldManager field;
     [SerializeField] private Transform roomStart;
     [SerializeField] private Transform fieldStart;
@@ -14,7 +12,8 @@ public class FlowManager : Singleton<FlowManager>
     [Header("===Day===")]
     [SerializeField] private DayData[] days;   // 순서 = Day enum (First, Second, Third)
 
-    public MikuCharacter Miku => miku;   // InteractZone(프리팹 포함)이 Instance로 꺼내 씀
+    private static MikuCharacter Miku => GameManager.Instance.Miku;
+    private static TimelineManager Timeline => TimelineManager.Instance;
 
     public Day CurrentDay { get; private set; }
     public event Action<Day> DayChanged;   // 아직 구독자 없음 (나중에 FieldState 밝기)
@@ -36,9 +35,9 @@ public class FlowManager : Singleton<FlowManager>
         DashLog.Log($"DayChanged day={CurrentDay}");
 
         // 방
-        miku.Teleport(roomStart);
-        yield return timeline.Play(CutsceneType.Opening, CurrentDay);
-        miku.ExitCutscene();
+        Miku.Teleport(roomStart);
+        yield return Timeline.Play(CutsceneType.Opening, CurrentDay);
+        Miku.ExitCutscene();
 
         // 방 탐색: 컴퓨터 앞에서 E
         dreamRequested = false;
@@ -47,19 +46,19 @@ public class FlowManager : Singleton<FlowManager>
         waitingDream = false;
 
         // 필드
-        miku.EnterCutscene();
-        miku.Teleport(fieldStart);
-        yield return timeline.Play(CutsceneType.FieldArrive, CurrentDay);
-        yield return timeline.Play(CutsceneType.Intro, CurrentDay);   // 사이에 해제 없음
+        Miku.EnterCutscene();
+        Miku.Teleport(fieldStart);
+        yield return Timeline.Play(CutsceneType.FieldArrive, CurrentDay);
+        yield return Timeline.Play(CutsceneType.Intro, CurrentDay);   // 사이에 해제 없음
 
         // 전투: Intro 끝 -> 적 생성 -> 조작 해제
-        field.Spawn(days[(int)CurrentDay], miku.transform);
-        miku.ExitCutscene();
+        field.Spawn(days[(int)CurrentDay], Miku.transform);
+        Miku.ExitCutscene();
         DashLog.Log($"BattleStart day={CurrentDay}");
 
         // 전멸 + 공격·회피·궁극기가 끝나 Locomotion으로 돌아올 때까지
         yield return new WaitUntil(() => field.AliveCount == 0);
-        yield return new WaitUntil(() => miku.IsLocomotion);
+        yield return new WaitUntil(() => Miku.IsLocomotion);
         DashLog.Log($"DayClear day={CurrentDay}");
 
         // 포탈에서 E -> 방으로
@@ -69,10 +68,10 @@ public class FlowManager : Singleton<FlowManager>
         yield return new WaitUntil(() => returnRequested);
         waitingReturn = false;
 
-        miku.EnterCutscene();
+        Miku.EnterCutscene();
         field.Cleanup();
-        miku.Teleport(roomStart);
-        miku.ExitCutscene();
+        Miku.Teleport(roomStart);
+        Miku.ExitCutscene();
 
         DashLog.Log("FlowRoomReturn");
     }

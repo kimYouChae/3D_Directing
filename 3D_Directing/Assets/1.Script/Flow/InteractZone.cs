@@ -13,7 +13,7 @@ public class InteractZone : MonoBehaviour
 
     private bool inside;
 
-    private static MikuCharacter Miku => FlowManager.Instance.Miku;
+    private static MikuCharacter Miku => GameManager.Instance.Miku;
 
     private void OnTriggerEnter(Collider other)
     {
