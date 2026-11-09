@@ -413,7 +413,7 @@ public class MikuCharacter : MonoBehaviour
         }
 
         // Director 찾기 + UltCameraRig를 미쿠 위치로 정렬 (재생·잠금·해제는 여기서 직접)
-        ultDirector = TimelineManager.Instance.Prepare(CutsceneType.Ult);
+        ultDirector = TimelineManager.Instance.PrepareUlt();
         if (ultDirector == null)
         {
             DashLog.Log("UltBlocked reason=noDirector");
