@@ -21,6 +21,8 @@ public class FlowManager : Singleton<FlowManager>
 
     private bool waitingDream;     // 컴퓨터 E를 받는 구간인지
     private bool dreamRequested;
+    private bool waitingReturn;    // 포탈 E를 받는 구간인지
+    private bool returnRequested;
     private bool waitingDayEnd;    // 결과 UI 버튼을 받는 구간인지
     private bool dayEndRequested;
 
@@ -66,15 +68,27 @@ public class FlowManager : Singleton<FlowManager>
         Miku.Teleport(fieldStart);
         yield return Timeline.PlayAll(timelines.Arrive);
 
-        // 전투: 도착 컷신 끝 -> 적 생성 -> 조작 해제
-        field.Spawn(data, Miku.transform);
+        // 전투: 도착 컷신 끝 -> 1웨이브 생성 -> 조작 해제
+        field.SpawnWave1(data);
         Miku.ExitCutscene();
         DashLog.Log($"BattleStart day={CurrentDay}");
 
-        // 전멸 + 공격·회피·궁극기가 끝나 Locomotion으로 돌아올 때까지
+        // 1웨이브 전멸 -> 2웨이브 바로 생성 (잠그지 않음)
+        yield return new WaitUntil(() => field.AliveCount == 0);
+        DashLog.Log("WaveClear wave=1");
+        field.SpawnWave2(data);
+
+        // 2웨이브 전멸 + 공격·회피·궁극기가 끝나 Locomotion으로 돌아올 때까지
         yield return new WaitUntil(() => field.AliveCount == 0);
         yield return new WaitUntil(() => Miku.IsLocomotion);
         DashLog.Log($"DayClear day={CurrentDay}");
+
+        // 포탈에서 E
+        field.OpenPortal();
+        returnRequested = false;
+        waitingReturn = true;
+        yield return new WaitUntil(() => returnRequested);
+        waitingReturn = false;
 
         // 결과 UI: 잠그고(클릭이 공격으로 안 들어가게) 커서 풀기 -> 버튼 대기
         Miku.EnterCutscene();
@@ -118,6 +132,10 @@ public class FlowManager : Singleton<FlowManager>
             case InteractType.Computer when waitingDream:
                 dreamRequested = true;
                 DashLog.Log("Interact dream");
+                break;
+            case InteractType.Portal when waitingReturn:
+                returnRequested = true;
+                DashLog.Log("Interact return");
                 break;
             default:
                 DashLog.Log($"InteractIgnored type={type}");

@@ -1,12 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // 필드 전투: 적 생성(alive에 Add) -> 죽으면 Remove -> 전멸 판정, 포탈 열기/닫기, 남은 장판 정리
 public class FieldManager : MonoBehaviour
 {
     [Header("===Spawn===")]
-    [SerializeField] private float minRadius = 3f;      // 기준(미쿠)과 너무 붙지 않게
-    [SerializeField] private float maxRadius = 8f;      // 기준 주변 이 반경 안 랜덤 (나중에 디테일: 필드 밖·벽 속 방지)
+    // 웨이브별 고정 생성 위치 (회전 = 적이 바라볼 방향). 0번부터, 적이 더 많으면 순환
+    [FormerlySerializedAs("spawnPoints")]   // 기존 연결 유지
+    [SerializeField] private Transform[] wave1Points;
+    [SerializeField] private Transform[] wave2Points;
     [Header("===Portal===")]
     [SerializeField] private GameObject portalPrefab;   // 전멸 후 생성 (InteractZone Type = Portal)
     [SerializeField] private Transform portalPoint;     // 생성 위치
@@ -17,23 +20,35 @@ public class FieldManager : MonoBehaviour
 
     public int AliveCount => alive.Count;
 
-    public void Spawn(DayData data, Transform center)
-    {
-        foreach (DayData.EnemySpawn spawn in data.Enemies)
-        {
-            for (int i = 0; i < spawn.count; i++)
-            {
-                Vector2 offset = Random.insideUnitCircle.normalized * Random.Range(minRadius, maxRadius);
-                Vector3 pos = center.position + new Vector3(offset.x, 0f, offset.y);
-                Quaternion rot = Quaternion.LookRotation(new Vector3(-offset.x, 0f, -offset.y));   // 기준을 보게
+    public void SpawnWave1(DayData data) => Spawn(data.Wave1, wave1Points, "Wave1");
+    public void SpawnWave2(DayData data) => Spawn(data.Wave2, wave2Points, "Wave2");
 
-                Enemy enemy = Instantiate(spawn.prefab, pos, rot);
-                enemy.Died += OnEnemyDied;
-                alive.Add(enemy);
+    private void Spawn(DayData.EnemySpawn[] wave, Transform[] spawnPoints, string label)
+    {
+        if (spawnPoints == null || spawnPoints.Length == 0)
+        {
+            DashLog.Log($"SpawnNoPoint label={label}");
+            return;
+        }
+
+        int index = 0;   // 웨이브마다 0번 위치부터
+        if (wave != null)
+        {
+            foreach (DayData.EnemySpawn spawn in wave)
+            {
+                for (int i = 0; i < spawn.count; i++)
+                {
+                    Transform point = spawnPoints[index % spawnPoints.Length];   // 적이 위치보다 많으면 처음으로
+                    index++;
+
+                    Enemy enemy = Instantiate(spawn.prefab, point.position, point.rotation);
+                    enemy.Died += OnEnemyDied;
+                    alive.Add(enemy);
+                }
             }
         }
 
-        DashLog.Log($"Spawn day={data.name} count={alive.Count} center={center.position}");
+        DashLog.Log($"Spawn label={label} count={index} points={spawnPoints.Length}");
     }
 
     private void OnEnemyDied(Enemy enemy)
