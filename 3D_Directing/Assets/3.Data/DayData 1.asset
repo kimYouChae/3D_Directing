@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: DayData 1
   m_EditorClassIdentifier: 
   wave1:
-  - prefab: {fileID: 4859536011752900609, guid: f05ba8a530a66e4489add5b33985e813, type: 3}
+  - prefab: {fileID: 758157982800285162, guid: 3bbe38ded0898f849a0f23a98e06086c, type: 3}
     count: 5
   wave2:
-  - prefab: {fileID: 4859536011752900609, guid: f05ba8a530a66e4489add5b33985e813, type: 3}
+  - prefab: {fileID: 6415349675648493587, guid: f67e65b5b2e84fb40b69a57a1102fb9e, type: 3}
     count: 5
