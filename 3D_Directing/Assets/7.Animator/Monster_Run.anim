@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Monster38_Run
+  m_Name: Monster_Run
   serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
@@ -4511,8 +4511,7 @@ AnimationClip:
         time: 1.1666667
         value: {x: 0.00000019540195, y: 0.98597217, z: -0.16691017, w: -0.00000016813117}
         inSlope: {x: 0.0000034624009, y: -0.0000008940705, z: -0.00000022351763, w: -0.000000586132}
-        outSlope: {x: 0.0000034624009, y: -0.0000008940705, z: -0.00000022351763,
-          w: -0.000000586132}
+        outSlope: {x: 0.0000034624009, y: -0.0000008940705, z: -0.00000022351763, w: -0.000000586132}
         tangentMode: 0
         weightedMode: 0
         inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334, w: 0.33333334}

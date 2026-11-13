@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Monster38_Idle03
+  m_Name: Monster_Idle03
   serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
@@ -2191,10 +2191,8 @@ AnimationClip:
       - serializedVersion: 3
         time: 3.966667
         value: {x: -0.47665298, y: 0.26933643, z: 0.19477788, w: 0.8138313}
-        inSlope: {x: 0.00000044703205, y: -0.00000089407376, z: -0.00000022351924,
-          w: 0}
-        outSlope: {x: 0.00000044703205, y: -0.00000089407376, z: -0.00000022351924,
-          w: 0}
+        inSlope: {x: 0.00000044703205, y: -0.00000089407376, z: -0.00000022351924, w: 0}
+        outSlope: {x: 0.00000044703205, y: -0.00000089407376, z: -0.00000022351924, w: 0}
         tangentMode: 0
         weightedMode: 0
         inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334, w: 0.33333334}
